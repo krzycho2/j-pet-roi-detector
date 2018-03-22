@@ -1,1 +1,0 @@
-print("Tutaj coś piszę")
