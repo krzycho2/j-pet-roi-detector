@@ -1,0 +1,51 @@
+#!/bin/bash
+echo '#####################################################'
+echo '######### Witaj w programie do generowania ##########'
+echo '#########     wnioskow o certyfikaty       ##########'
+echo '#####################################################'
+echo ""
+echo "Zostaniesz poproszony o wpisanie różnych danych"
+echo "Po wpisaniu wciśnij Enter aby przejść dalej"
+echo "Domyslne wartosci danych zostaly podane w [nawiasach]"
+echo ""
+echo "Dwuliterowy kod kraju [PL]: "
+read C
+if [[ -z $C ]]; then
+        C="PL"
+fi
+echo "Wojewodztwo [mazowieckie]: "
+read ST
+if [[ -z $ST ]]; then
+        ST="mazowieckie"
+fi
+echo "Ogranizacja [NCBJ]: "
+read O
+if [[ -z $O ]]; then
+        O="NCBJ"
+fi
+echo "Jednostka organizacyjna [CIS]: "
+read OU
+if [[ -z $OU ]]; then
+        OU="CIS"
+fi
+echo "Imie: "
+read CN_name
+echo "Nazwisko: "
+read CN_surname
+echo "Adres email: "
+read CN_email
+
+CN="$CN_name $CN_surname/emailAddress=$CN_email"
+
+keypath="${CN_name:0:1}$CN_surname.key"
+keypath=${keypath,,}
+
+csrpath="${CN_name:0:1}$CN_surname.csr"
+csrpath=${csrpath,,}
+
+echo "Zostaniesz poproszony o dwukrotne wpisanie hasla szyfrujacego klucz prywatny: "
+openssl req -out $csrpath -new -newkey rsa:2048 -keyout $keypath -subj "/C=$C/ST=$ST/O=$O/OU=$OU/CN=$CN"
+
+echo "Plik $csrpath musisz wyslac mailem jako zalacznik do administratora w celu podpisania na adres ca@cis.gov.pl"
+echo "Uwaga: NIE wysylaj pliku $keypath - jest to Twoj tajny klucz prywatny"
+echo "Koniec"
