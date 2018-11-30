@@ -73,12 +73,12 @@ sigma = 15.0
 tabliczka = np.random.normal(avg, sigma, size=(100,100))
 tabliczka[90:100, :10 ] = np.random.randint(low = 100, high = 250, size = (10,10))
 n, bins = np.histogram(tabliczka, bins=50)  
-plt.plot(.5*(bins[1:]+bins[:-1]), n/max(n))
+plt.plot(.5*(bins[1:]+bins[:-1]), np.log10(n/max(n)))
 
 plt.show()
 
-max =np.argmax(n)
-print(max)
+# max =np.argmax(n)
+# print(max)
 # prog = np.argmin(n) 
 
 # tab = region_growing_by_gray_values(tabliczka, prog)
