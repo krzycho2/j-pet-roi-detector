@@ -58,19 +58,28 @@ Tło to szum, zakładamy, że o wiele słabsze od wartosci
 szukanego obszaru.
 """
 
-tabliczka = np.random.randint(10, size = (5, 5))
-tabliczka[3,0] = 200
-tabliczka[3,1] = 210
-tabliczka[4,0] = 190
-tabliczka[4,1] = 200
+# -----------Obliczanie progu--------------------
 
-prog = 100
-#print(tabliczka)
-
-# (n, bins) = np.histogram(tabliczka)
-# prog = np.argmin(n) 
 # Z tym własnie nie mogłem sobie poradzić:
 # Jak odczytać z histogramu odciętą - czyli szukany próg.
 
-tab = region_growing_by_gray_values(tabliczka, prog)
-print(tab)
+# Dane przykładowe
+
+
+# Zakładamy rozkład normalny szumu na przedziale (0,100)
+avg = 50.0
+sigma = 15.0
+
+tabliczka = np.random.normal(avg, sigma, size=(100,100))
+tabliczka[90:100, :10 ] = np.random.randint(low = 100, high = 250, size = (10,10))
+n, bins = np.histogram(tabliczka, bins=50)  
+plt.plot(.5*(bins[1:]+bins[:-1]), np.log10(n/max(n)))
+
+plt.show()
+
+# max =np.argmax(n)
+# print(max)
+# prog = np.argmin(n) 
+
+# tab = region_growing_by_gray_values(tabliczka, prog)
+# print(tab)
