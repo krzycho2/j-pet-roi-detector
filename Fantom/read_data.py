@@ -4,7 +4,8 @@ import matplotlib
 data = []
 
 # Odczytanie danych z pliku tekstowego
-with open("fantom2.txt") as f:
+fantomPath = 'Fantom/fantom2.txt'
+with open(fantomPath) as f:
     lines = f.readlines()
 
 for s in lines:

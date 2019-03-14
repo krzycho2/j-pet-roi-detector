@@ -4,7 +4,6 @@ medpy
 interfile
 opencv-python
 matplotlib
-os
 imutils
-glob
-pickle
+pydicom
+opencv-python
