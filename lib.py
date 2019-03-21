@@ -53,7 +53,7 @@ class Data3D():
                 a = s.split()
                 data.append(a)
             
-            dane = np.array(data, dtype="float32"))
+            dane = np.array(data, dtype="float32")
             if len(dane[0]) == 2:               # Sprawdzenie ile wymiarów posiadają dane
                 self.data3D = vol2Img3D(dane)  # Konwersja do numpy.array
             elif len(dane[0]) == 4:

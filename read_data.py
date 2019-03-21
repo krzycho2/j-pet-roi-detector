@@ -64,14 +64,14 @@ dlug_okna = int(0.02*binsCount)
 hist_mean = np.convolve(hist, np.ones((dlug_okna,))/dlug_okna, mode='valid')
 xx = np.linspace(0, 1, len(hist_mean))
 # ...
-fig = plt.figure()
-plt.subplot(2,1,1)
-plt.plot(edges[1:binsCount], hist[1:]) 
-plt.yscale('log')
-plt.subplot(2,1,2)
-plt.plot(xx, hist_mean)
-plt.yscale('log')
-plt.show()
+# fig = plt.figure()
+# plt.subplot(2,1,1)
+# plt.plot(edges[1:binsCount], hist[1:]) 
+# plt.yscale('log')
+# plt.subplot(2,1,2)
+# plt.plot(xx, hist_mean)
+# plt.yscale('log')
+# plt.show()
 
 # Progowanie ręczne - trzeba będzie zrobić to metodą Otsu
 # Będą trzy progi 
@@ -91,13 +91,13 @@ for i in range(121):
         elif img[i,j] >= p2 and img[i,j] < p3:
             img2[i, j, :] = [0.0, 255.0, 0.0]
         elif img[i,j] >= p3 and img[i,j] < p4:
-            img2[i, j, :] = [0.0, 255.0, 0.0]
+            img2[i, j, :] = [255.0, 0.0, 0.0]
         else:
             img2[i, j, :] = [255.0, 255.0, 255.0]
 
-# plt.imshow(img2)
-# plt.title('Wynik segmentacji po ręcznym wyborze progów')
-# plt.show()
+plt.imshow(img2)
+plt.title('Wynik segmentacji po ręcznym wyborze progów')
+plt.show()
 
 
 # Wyświetlenie jednej z płaszczyzn
