@@ -24,7 +24,7 @@ def vol2Img3D(vol):
     """
     Konwertuje wolumem 3D z postaci N x {x,y,z,f(x,y,z)} do postaci sqrt(Nx) x sqrt(Ny) x Nz
     """
-    Nz = len(np.array(list(set(data3D[:,2]))))     # Zbiór unikalnych z
+    Nz = len(np.array(list(set(vol[:,2]))))     # Zbiór unikalnych z
     N = int(np.sqrt((len(vol)/Nz)))
     
     licz = 0
@@ -37,9 +37,9 @@ def vol2Img3D(vol):
     
     return img3D
 
-class Data3D():
+class VolumeData():
     """
-    Obiekty tej klasy wyonują operacje na plikach fantoma (odczyt, zapis do pliku), które są podane jako macierz punktów liczba_punktów x {x,y,z,f} lub jako obrazy 
+    Obiekty tej klasy wykonują operacje na plikach fantoma (odczyt, zapis do pliku), które są podane jako macierz punktów liczba_punktów x {x,y,z,f} lub jako obrazy 
     """
     data3D = []
     def __init__(self, filePath): 
@@ -77,15 +77,14 @@ class Data3D():
 
     def getSlice(self, sliceNum=None, deep=None):     
         "sliceNum - numer przekroju, deep - 'głębokość w objętości podana jako liczba z przedziału (0,1)"
-        if sliceNum ~= None and deep == None
+        if sliceNum != None and deep == None:
             return self.data3D[:,:,sliceNum]
-        elif deep ~= None and sliceNum == None:
+        elif deep != None and sliceNum == None:
             sliceNum = int(deep * self.data3D.shape[2])
             return self.data3D[:,:,sliceNum]
-        elif:
+        else:
             print('getSlice: Niepoprawna liczba argumentów')
 
-dataz0 = np.array(dataz0)
 
 
 
