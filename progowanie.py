@@ -2,27 +2,29 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import matplotlib
-import lib
+from lib import VolumeData, vol2Img3D, arr2img
+
+"""
+1. Wczytanie obrazu fantoma z pliku
+2. Pobranie slice'u (przekroju)
+3. Progowanie:
+   - wyciąganie progów z (wygładzonego) histogramu
+   - progowanie adaptacyjne
+   - progowanie iteracyjne
+4. Wykrywanie krawędzi
+"""
 
 FantomPath = '/home/krzysztof/Dokumenty/Praca_inż/j-pet-roi-detector/Fantom'
 dataFilePath = FantomPath + '/data.pckl'
-dataz0Path = FantomPath + '/dataz0.pckl'
-with open(dataFilePath, 'rb') as f:
-    data3D = pickle.load(f)
-
-with open(dataz0Path, 'rb') as f:
-    dataz0 = pickle.load(f)
-
-# Jak z tablicy 14641x3 zrobić tablicę 121x121, gdzie dla odpowiednich (x,y) była wartość z tomografu
-img = np.zeros([121,121])
-licz = 0
-for i in range(121):
-    for j in range(121):
-        img[120-j,i] = dataz0[licz,2]
-        licz += 1
-
-plt.imshow(img)
+fantomVolume = VolumeData(dataFilePath)
+slice18 = fantomVolume.getSlice(18)
+plt.imshow(slice18)
 plt.show()
+
+
+
+# ------Stara implementacja -----------------------------
+
 # Histogram próbek
 # bins - równoodległe punkty na osi x
 # bins = np.arange(0,1,0.0001)

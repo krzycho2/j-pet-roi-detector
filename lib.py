@@ -32,7 +32,7 @@ def vol2Img3D(vol):
     for i in range(N):
         for j in range(N):
             for k in range(Nz):
-                img3D[j,i,k] = vol[licz,3]
+                img3D[N-j-1,i,k] = vol[licz,3]
                 licz += 1
     
     return img3D
@@ -45,30 +45,33 @@ class VolumeData():
     def __init__(self, filePath): 
         "Tworzy obiekt na podstawie danych z pliku txt lub pickle"
         ext = os.path.splitext(filePath)[1]     # Pobranie rozszerzenia pliku
+        dane = []   # Pusta macierz
         if ext == '.txt':        # Dane podane w formacie tekstowym
+            print('Wykryto plik .txt')
             with open(filePath) as f:
                 lines = f.readlines()
             data = []
             for s in lines:
                 a = s.split()
                 data.append(a)
-            
-            dane = np.array(data, dtype="float32")
-            if len(dane[0]) == 2:               # Sprawdzenie ile wymiarów posiadają dane
-                self.data3D = vol2Img3D(dane)  # Konwersja do numpy.array
-            elif len(dane[0]) == 4:
-                self.data3D = dane
-            else:
-                self = None
-                print('Niepoprawny typ danych')
-        
-        elif ext == '.pickle':
+            dane = data
+
+        elif ext == '.pckl':
+            print('Wykryto plik .pickle')
             with open(filePath, 'rb') as f:
-                pickle.load(self.data3D, f)
-        
+                dane = pickle.load(f)
+
+        dane = np.array(dane, dtype="float32")
+        if len(dane[0]) == 4 and len(dane.shape) == 2:   # Sprawdzenie czy 2 wymiary i 4 kolumny
+            self.data3D = vol2Img3D(dane)  # Konwersja do wolumenu 3D 
+            print('2 wymiary, 4 kolumny - konwersja do wolumenu 3D')
+        elif len(dane.shape) == 3:   # Sprawdzenie czy 3 wymiary   
+            self.data3D = dane              # Nic nie zmieniać 
+            print('3 wymiary - nie zmieniać')
         else:
-            print('Błędny typ danych')           
             self = None
+            print('Niepoprawny typ danych')
+        
 
     def savePickle(self, filePath = __name__ + 'Data.pckl'):    
         "Zapisuje dane jako plik pickle"
@@ -85,6 +88,9 @@ class VolumeData():
         else:
             print('getSlice: Niepoprawna liczba argumentów')
 
-
+    def showAllSlicesInOne(self):
+        "Tworzy kolarz ze wszystkich przekrojów wolumenu"
+        # Niech będzie 6 rzędów
+        Nz = self.data3D.shape[2]   # Liczba przekrojów
 
 
