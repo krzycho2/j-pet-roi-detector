@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 import os
+import matplotlib.pyplot as plt
 
 # def moving_average():
 
@@ -41,7 +42,12 @@ class VolumeData():
     """
     Obiekty tej klasy wykonują operacje na plikach fantoma (odczyt, zapis do pliku), które są podane jako macierz punktów liczba_punktów x {x,y,z,f} lub jako obrazy 
     """
-    data3D = []
+    # data3D = []
+
+    @property
+    def data3D(self):
+        return self._data3D
+    
     def __init__(self, filePath): 
         "Tworzy obiekt na podstawie danych z pliku txt lub pickle"
         ext = os.path.splitext(filePath)[1]     # Pobranie rozszerzenia pliku
@@ -63,10 +69,10 @@ class VolumeData():
 
         dane = np.array(dane, dtype="float32")
         if len(dane[0]) == 4 and len(dane.shape) == 2:   # Sprawdzenie czy 2 wymiary i 4 kolumny
-            self.data3D = vol2Img3D(dane)  # Konwersja do wolumenu 3D 
+            self._data3D = vol2Img3D(dane)  # Konwersja do wolumenu 3D 
             print('2 wymiary, 4 kolumny - konwersja do wolumenu 3D')
         elif len(dane.shape) == 3:   # Sprawdzenie czy 3 wymiary   
-            self.data3D = dane              # Nic nie zmieniać 
+            self._data3D = dane              # Nic nie zmieniać 
             print('3 wymiary - nie zmieniać')
         else:
             self = None
@@ -81,16 +87,24 @@ class VolumeData():
     def getSlice(self, sliceNum=None, deep=None):     
         "sliceNum - numer przekroju, deep - 'głębokość w objętości podana jako liczba z przedziału (0,1)"
         if sliceNum != None and deep == None:
-            return self.data3D[:,:,sliceNum]
+            return self._data3D[:,:,sliceNum]
         elif deep != None and sliceNum == None:
-            sliceNum = int(deep * self.data3D.shape[2])
-            return self.data3D[:,:,sliceNum]
+            sliceNum = int(deep * self._data3D.shape[2])
+            return self._data3D[:,:,sliceNum]
         else:
             print('getSlice: Niepoprawna liczba argumentów')
 
     def showAllSlicesInOne(self):
         "Tworzy kolarz ze wszystkich przekrojów wolumenu"
         # Niech będzie 6 rzędów
-        Nz = self.data3D.shape[2]   # Liczba przekrojów
+        Nz = self._data3D.shape[2]   # Liczba przekrojów
+        rows = 6
+        cols = Nz//rows + 1
+        for index in range(0,Nz):
+            plt.subplot(rows,cols,index+1)
+            plt.imshow(self.getSlice(sliceNum=index))
+            plt.title('Slice ' + str(index))
+        plt.show()
+
 
 
