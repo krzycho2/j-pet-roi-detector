@@ -105,6 +105,5 @@ class VolumeData():
             plt.imshow(self.getSlice(sliceNum=index))
             plt.title('Slice ' + str(index))
         plt.show()
-
-
+        
 
