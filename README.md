@@ -1,5 +1,6 @@
 # j-pet-roi-detector
-Projekt dotyczący znajdowania obszarów zaintersowania (ROI) w obrazach pochodzących z tomografu PET, a konkoretnie z rekonstrukcji po skanowaniu.
+Projekt dotyczący znajdowania obszarów zaintersowania (ROI) w obrazach pochodzących z tomografu PET, a konkretnie z rekonstrukcji po skanowaniu.
+
 Segmentacja wykonywana jest następującymi metodami:
 - progowanie ręczne - analityk sam dobiera progi, a następnie dzieli obraz na obsary pod względem progów
 - progowanie Otsu
