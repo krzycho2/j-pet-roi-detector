@@ -57,10 +57,28 @@ def vol2Img3D(vol):
 
 class VolumeData():
     """
-    Obiekty tej klasy wykonują operacje na plikach fantoma (odczyt, zapis do pliku), które są podane jako macierz punktów liczba_punktów x {x,y,z,f} lub jako obrazy 
-    """
-    # data3D = []
+    Obiekty tej klasy wykonują operacje na plikach z rekonstrukcji (odczyt, zapis do pliku).
+    Dozwolone formaty plików: 
+    - tekstowy .txt
+    - pickle .pckl - wygodny format zapisu ZMIENNYCH do pliku w Pythonie
+    
+    Dane mogą być podane jako:
+    - macierz N x 4 - kolumny to {x, y, z, intensywność}, a wiersze to kolejne pomiary
+    - obrazy {x,y,z} (macierze 3D)  
+    
+    Obrazy można zapisać do plików pickle jako macierze 3D
+    Obiekty posiadają atrybuty:
+    - data3D - macierz punktów 3D
+    - fileName - końcowa nazwa pliku
 
+    Obiekty posiadają metody:
+    - init(filePath) - konstruktor. Jako argument podawana jest ścieżka do pliku.
+    - savePickle(filePath) - zapis danych (macierz 3D) do pliku pickle pod zadaną nazwą
+    - getSlice(sliceNUM) - zwraca macierz 2D (obraz) konkretnego przekroju
+    - showAllSlicesInOne() - wyświetla wszystkie przekroje obok siebie na jednym figure 
+    """
+
+    
     @property
     def data3D(self):
         return self._data3D
