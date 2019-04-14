@@ -5,6 +5,7 @@ Segmentacja wykonywana jest następującymi metodami:
 - progowanie ręczne - analityk sam dobiera progi, a następnie dzieli obraz na obsary pod względem progów
 - progowanie Otsu
 - progowanie zwykłe + Region Growing
+
 Stan obecny: Wykonane jest progowanie ręczne + zwykłe. Do zrobienia progowanie Otsu oraz zwykłe + Region Growing
 
 Organizacja projektu:
