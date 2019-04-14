@@ -3,7 +3,24 @@ import pickle
 import os
 import matplotlib.pyplot as plt
 
-# def moving_average():
+# Różne przydatne metody
+
+def getListOfFiles(dirName):
+    # create a list of file and sub directories 
+    # names in the given directory 
+    listOfFile = os.listdir(dirName)
+    allFiles = list()
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(dirName, entry)
+        # If entry is a directory then get the list of files in this directory 
+        if os.path.isdir(fullPath):
+            allFiles = allFiles + getListOfFiles(fullPath)
+        else:
+            allFiles.append(fullPath)
+                
+    return allFiles
 
 def arr2img(arr):
     """
@@ -47,10 +64,15 @@ class VolumeData():
     @property
     def data3D(self):
         return self._data3D
+
+    @property
+    def fileName(self):
+        return self, _fileName
     
     def __init__(self, filePath): 
         "Tworzy obiekt na podstawie danych z pliku txt lub pickle"
-        ext = os.path.splitext(filePath)[1]     # Pobranie rozszerzenia pliku
+        ext = os.path.splitext(filePath)[1]     # Pobranie nazwy pliku i rozszerzenia
+        self._fileName = os.path.basename(os.path.normpath(filePath))
         dane = []   # Pusta macierz
         if ext == '.txt':        # Dane podane w formacie tekstowym
             print('Wykryto plik .txt')
@@ -100,10 +122,12 @@ class VolumeData():
         Nz = self._data3D.shape[2]   # Liczba przekrojów
         rows = 6
         cols = Nz//rows + 1
+        fig = plt.figure(self._fileName)
         for index in range(0,Nz):
-            plt.subplot(rows,cols,index+1)
-            plt.imshow(self.getSlice(sliceNum=index))
-            plt.title('Slice ' + str(index))
+            ax = fig.add_subplot(rows,cols,index+1)
+            ax.imshow(self.getSlice(sliceNum=index))
+            ax.set_title('Slice ' + str(index))
+        
         plt.show()
         
 

@@ -7,3 +7,4 @@ matplotlib
 imutils
 pydicom
 opencv-python
+scikit-image
