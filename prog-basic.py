@@ -1,17 +1,17 @@
+"""
+Progowanie ręczne.
+1. Wczytanie danych z pliku
+2. Wyświetlenie histogramu
+3. Określenie minimów na histogramie przez 'analityka'
+4. Segmentacja przydzielająca wszystkie piksele (woksele) do jednej z N+1 obszarów, gdzie N - liczba progów
+"""
+
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import matplotlib
 from lib import VolumeData, vol2Img3D, arr2img
 from scipy.signal import argrelmin
-"""
-1. Wczytanie obrazu fantoma z pliku i pobranie slice'u (przekroju)
-2. Progowanie:
-   - wyciąganie progów z (wygładzonego) histogramu
-   - progowanie adaptacyjne
-   - progowanie iteracyjne
-4. Wykrywanie krawędzi
-"""
 
 # 1. Wczytanie i wyświetlenie przekrojów fantoma
 
@@ -42,12 +42,15 @@ plt.figure(1)
 plt.plot(xx, hist_mean)
 # plt.yscale('log')
 plt.show()
-# Progowanie ręczne - trzeba będzie zrobić to metodą Otsu
-# Będą trzy progi 
+
+# 3. Określenie progów
+
 p1 = 0.08
 p2 = 0.38
 p3 = 0.47
 p4 = 0.59
+
+# 4. segmentacja
 
 img2 = np.zeros([121,121,3])
 
@@ -68,14 +71,3 @@ plt.figure(2)
 plt.imshow(img2)
 plt.title('Wynik segmentacji po ręcznym wyborze progów')
 plt.show()
-
-
-# Jak dobrać parametr bins ?
-# Histogram dzieli zakres maksymalnych 
-"""
-arr = np.random.rand(100,100)
-bins = np.arange(0,1,0.001)
-hista, bin_edges = np.histogram(arr, bins=10)
-plt.plot(hista,'ro')
-plt.show()
-"""
