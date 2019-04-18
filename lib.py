@@ -115,7 +115,7 @@ class VolumeData():
             print('Wykryto plik .pickle')
             with open(filePath, 'rb') as f:
                 dane = pickle.load(f)
-            if is
+
 
         dane = np.array(dane, dtype="float32")
         if len(dane[0]) == 4 and len(dane.shape) == 2:   # Sprawdzenie czy 2 wymiary i 4 kolumny
