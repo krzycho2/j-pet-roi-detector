@@ -38,22 +38,29 @@ def arr2img(arr):
             licz += 1
     return img
 
-def vol2Img3D(vol):
+def points2Img3D(rawData):
     """
     Konwertuje wolumem 3D z postaci N x {x,y,z,f(x,y,z)} do postaci sqrt(Nx) x sqrt(Ny) x Nz
     """
-    Nz = len(np.array(list(set(vol[:,2]))))     # Zbiór unikalnych z
-    N = int(np.sqrt((len(vol)/Nz)))
+
+    ind = np.lexsort((rawData[:,2], rawData[:,1], rawData[:,0]))    # Sortowanie danych
+    rawData = rawData[ind]
+    
+    Nx = len(set(rawData[:,0]))
+    Ny = len(set(rawData[:,1]))
+    Nz = len(set(rawData[:,2]))
     
     licz = 0
-    img3D = np.zeros((N,N,Nz))
-    for i in range(N):
-        for j in range(N):
+    img3D = np.zeros((Nx,Ny,Nz))
+    for i in range(Nx):
+        for j in range(Ny):
             for k in range(Nz):
-                img3D[N-j-1,i,k] = vol[licz,3]
+                img3D[N-1-j,i,k] = rawData[licz,3]          # Przekopiowanie danych
                 licz += 1
     
     return img3D
+
+
 
 class VolumeData():
     """
@@ -92,6 +99,7 @@ class VolumeData():
         ext = os.path.splitext(filePath)[1]     # Pobranie nazwy pliku i rozszerzenia
         self._fileName = os.path.basename(os.path.normpath(filePath))
         dane = []   # Pusta macierz
+
         if ext == '.txt':        # Dane podane w formacie tekstowym
             print('Wykryto plik .txt')
             with open(filePath) as f:
@@ -102,18 +110,22 @@ class VolumeData():
                 data.append(a)
             dane = data
 
+        # Drugi przypadek - dane podane w formacie pickle
         elif ext == '.pckl':
             print('Wykryto plik .pickle')
             with open(filePath, 'rb') as f:
                 dane = pickle.load(f)
+            if is
 
         dane = np.array(dane, dtype="float32")
         if len(dane[0]) == 4 and len(dane.shape) == 2:   # Sprawdzenie czy 2 wymiary i 4 kolumny
-            self._data3D = vol2Img3D(dane)  # Konwersja do wolumenu 3D 
+            self._data3D = points2Img3D(dane)  # Konwersja do wolumenu 3D 
             print('2 wymiary, 4 kolumny - konwersja do wolumenu 3D')
+            print(f'Dane mają wymiary: {self._data3D.shape}')
         elif len(dane.shape) == 3:   # Sprawdzenie czy 3 wymiary   
             self._data3D = dane              # Nic nie zmieniać 
             print('3 wymiary - nie zmieniać')
+            print(f'Dane mają wymiary: {self._data3D.shape}')
         else:
             self = None
             print('Niepoprawny typ danych')
