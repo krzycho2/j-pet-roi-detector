@@ -55,7 +55,7 @@ def points2Img3D(rawData):
     for i in range(Nx):
         for j in range(Ny):
             for k in range(Nz):
-                img3D[N-1-j,i,k] = rawData[licz,3]          # Przekopiowanie danych
+                img3D[Ny-1-j,i,k] = rawData[licz,3]          # Przekopiowanie danych
                 licz += 1
     
     return img3D
@@ -94,8 +94,9 @@ class VolumeData():
     def fileName(self):
         return self, _fileName
     
-    def __init__(self, filePath): 
+    def __init__(self, filePath, dataType='float32'): 
         "Tworzy obiekt na podstawie danych z pliku txt lub pickle"
+        # Do zaimplementowania - różne typy danych. W sumie lepiej jak będzie uint8 - znana z góry liczba możliwych wartości
         ext = os.path.splitext(filePath)[1]     # Pobranie nazwy pliku i rozszerzenia
         self._fileName = os.path.basename(os.path.normpath(filePath))
         dane = []   # Pusta macierz

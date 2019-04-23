@@ -17,11 +17,12 @@ for i in range(leng):
     vol = VolumeData(files[i])
     volList.append(vol)
 
+# vol = VolumeData(files[0])
 # Zaprezentowanie wszystkich przekrojów każdej rekonstrukcji - odkomentować
-"""
+
 for volume in volList:
     volume.showAllSlicesInOne()
-"""
+
 # Ewentualnie pokazanie poszczególnych slice'ów - odkomentować 
 """
 vol0 = volList[0]
