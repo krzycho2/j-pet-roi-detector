@@ -2,7 +2,8 @@ import numpy as np
 import pickle
 import os
 import matplotlib.pyplot as plt
-
+import random
+import itertools
 # Różne przydatne metody
 
 def getListOfFiles(dirName):
@@ -59,6 +60,26 @@ def points2Img3D(rawData):
                 licz += 1
     
     return img3D
+
+def segmentData(image, ths):
+    """Segmentuje obraz 2d lub 3d w odniesieniu do progów podanych jako argumenty"""
+    lng = len(ths)
+
+    ths = sorted(ths)   # Na wszelki wypadek sortowanko
+    if lng > 8:
+        print('Nie obsługujemy tylu możliwych progów. Pozdrawiamy, ekipa lib.py')
+        return None
+
+    # Kolory
+    kolory = []
+    [kolory.append(x) for x in itertools.product([0,255], repeat=3)]
+    segData = np.zeros([*image_shape,3], dtype='uint8')
+
+    # for i in range(image_shape[0]):
+    #     for j in range(image_shape[1]):
+    #         for k in range(1,lng):
+
+
 
 
 
