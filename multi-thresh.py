@@ -26,7 +26,7 @@ h, w = slice75.shape
 hist = np.histogram(slice75, bins=maxVal)[0]
 N = h*w
 w0k, w1k, w2k   = 0,0,0       # Jakieś wagi, double
-m0k, m1k, n2k   = 0,0,0
+m0k, m1k, n2k   = 0,0,0       # Średnie 
 m0, m1, m2      = 0,0,0
 m0k, m1k, mt    = 0,0,0
 currVar         = 0
@@ -71,22 +71,24 @@ for t1 in range(maxVal):
             thresh2 = t2
 
 # Przyporządkowanie punktów do trzech klas
-# red = np.zeros(slice75.shape); grn = r; blu = r
-segData = np.zeros((*slice75.shape, 3), dtype='uint8')
-for i in range(h):
-    for j in range(w):
-        if slice75[i,j] < thresh1:
-            segData[i,j] = 255,0,0
-        elif slice75[i,j] >= thresh1 and slice75[i,j] < thresh2:
-            segData[i,j] = 0,255,0
-        else:
-            segData[i,j] = 0,0,255
+red = np.zeros(slice75.shape); grn = r; blu = r
+# segData = np.zeros((*slice75.shape, 3), dtype='uint8')
+# for i in range(h):
+#     for j in range(w):
+#         if slice75[i,j] < thresh1:
+#             segData[i,j] = 255,0,0
+#         elif slice75[i,j] >= thresh1 and slice75[i,j] < thresh2:
+#             segData[i,j] = 0,255,0
+#         else:
+#             segData[i,j] = 0,0,255
 
-# red = slice75 < thresh1
-# grn = (slice75 >= thresh1); grn = slice75 < thresh2)
-# blu = slice75 >= thresh2
+red = slice75 < thresh1
+grn = np.logical_and(slice75 >= thresh1, slice75 < thresh2)
+blu = slice75 >= thresh2
 
-# segData = 255* np.array((red,grn,blu), dtype='uint8'
+segData = 255* np.array([[red],[grn],[blu]], dtype='uint8')
+segData = np.rot90(segData, axes=[0,2])                     # Nie będzie trzeba to robić gdy damy float32 zamiast uint8
+
 plt.subplot(1,2,1); plt.imshow(slice75); plt.title('Obraz oryginalny')
 plt.subplot(1,2,2); plt.imshow(segData); plt.title('Obraz po segmentacji metodą Otsu dwuwartościową')
 plt.show()
