@@ -63,23 +63,52 @@ def points2Img3D(rawData):
 
 def segmentData(image, ths):
     """Segmentuje obraz 2d lub 3d w odniesieniu do progów podanych jako argumenty"""
-    lng = len(ths)
 
     ths = sorted(ths)   # Na wszelki wypadek sortowanko
-    if lng > 8:
+    if len(ths) > 8:
         print('Nie obsługujemy tylu możliwych progów. Pozdrawiamy, ekipa lib.py')
         return None
 
     # Kolory
     kolory = []
     [kolory.append(x) for x in itertools.product([0,255], repeat=3)]
-    segData = np.zeros([*image_shape,3], dtype='uint8')
+    print('Kolory:', kolory)
+    segData = np.zeros([*image.shape,3], dtype='uint8')
+    
+#    Kolorowanie element po elemencie - najmniej efektywna metoda na świecie
+    if len(image.shape) == 3:
+        print('Dane 3 wymiarowe')
+    else:
+        print('Dane 2-wymiarowe')
+        
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            
+            # Wolumen 3D
+            if len(image.shape) == 3:     
+                for k in range(image.shape[2]):
+                    if image[i,j,k] < ths[0]:
+                        segData[i,j,k] = kolory[0]
+                    for t in range(len(ths) - 1):
+                        if image[i,j,k] >= ths[t] and image[i,j,k] < ths[t+1]:
+                            segData[i,j,k] = kolory[t+1]
+           
+            # Obraz 2D
+            else:
+                if image[i,j] < ths[0]:
+                    segData[i,j] = kolory[0]
+                for t in range(len(ths) - 1):
+                    if image[i,j] >= ths[t] and image[i,j] < ths[t+1]:
+                        segData[i,j] = kolory[t+1]
+                if image[i,j] > ths[-1]:
+                    segData[i,j] = kolory[-1]
 
-    # for i in range(image_shape[0]):
-    #     for j in range(image_shape[1]):
-    #         for k in range(1,lng):
+    return segData
 
-
+    
+    # Macierz trzeba teraz obrócić tak, aby wymiar kolorów był na końcu
+    # for i in range(len(segData.shape) - 1):
+    #     segData = np.rot90(segData, axes=[i, i+1])
 
 
 
@@ -118,6 +147,7 @@ class VolumeData():
     def __init__(self, filePath, dataType='float32'): 
         "Tworzy obiekt na podstawie danych z pliku txt lub pickle"
         # Do zaimplementowania - różne typy danych. W sumie lepiej jak będzie uint8 - znana z góry liczba możliwych wartości
+        # Trzeba też uwzględnić możliwość tworzenia obiektów na podstawie macierzy
         ext = os.path.splitext(filePath)[1]     # Pobranie nazwy pliku i rozszerzenia
         self._fileName = os.path.basename(os.path.normpath(filePath))
         dane = []   # Pusta macierz
