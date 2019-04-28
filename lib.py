@@ -72,7 +72,7 @@ def segmentData(image, ths):
     # Kolory
     kolory = []
     [kolory.append(x) for x in itertools.product([0,255], repeat=3)]
-    print('Kolory:', kolory)
+    # print('Kolory:', kolory)
     segData = np.zeros([*image.shape,3], dtype='uint8')
     
 #    Kolorowanie element po elemencie - najmniej efektywna metoda na świecie
@@ -144,13 +144,44 @@ class VolumeData():
     def fileName(self):
         return self, _fileName
     
-    def __init__(self, filePath, dataType='float32'): 
-        "Tworzy obiekt na podstawie danych z pliku txt lub pickle"
+    def __init__(self, inputData, dataType='float'): 
+        """
+        Tworzy obiekt data3D przechowujący obraz 3D z tomografu.
+
+        Argumenty
+
+            inputData (string lub array): Dane wejściowe. Mogą pochodzić z:
+            - pliku txt lub pickle
+            - macierzy Nx4 (x, y, z, f{x,y,z}) lub PxQxR
+
+            dataType (string): do wyboru:
+            - 'float' - dane formatowane do flaot 32 bitowego, wartości z przedziału [0,1] 
+            - 'uint8' - format 8 bitowy, dane z przedziału [0,255]
+        
+        """
         # Do zaimplementowania - różne typy danych. W sumie lepiej jak będzie uint8 - znana z góry liczba możliwych wartości
         # Trzeba też uwzględnić możliwość tworzenia obiektów na podstawie macierzy
-        ext = os.path.splitext(filePath)[1]     # Pobranie nazwy pliku i rozszerzenia
-        self._fileName = os.path.basename(os.path.normpath(filePath))
-        dane = []   # Pusta macierz
+        ext = os.path.splitext(inputData)[1]     # Pobranie nazwy pliku i rozszerzenia
+
+        # Kontrola poprawności danych 
+        # Jeśli zły typ danych wejściowych to zwrócenie None
+        if not (isinstance(inputData, np.ndarray) or isinstance(inputData, str)):
+            print(f'Zły typ danych wejściowych inputData. Oczekiwane: numpy.array lub str. Podano {type(a)}.')
+            return None
+
+        # Jeśli ścieżka nie ma rozszerzenia txt lub None
+        if ext is not '.txt' and ext is not '.pickle':
+            print('Niepoprawna ścieżka do pliku z danych. Dozwolone są ścieżki z rozszerzeniami .txt lub .pckl')
+            return None
+
+        # Jeśli podano zły typ danych WYJŚCIOWYCH to zwrócenie None
+        if  dataType is not 'float' and dataType is not 'uint8':
+            print(f'Niepoprawny typ danych. Oczekiwano float lub uint8. Podano {dataType}.')
+            return None
+
+
+        self._fileName = os.path.basename(os.path.normpath(inputData))
+        rawData = []   # Pusta macierz
 
         if ext == '.txt':        # Dane podane w formacie tekstowym
             print('Wykryto plik .txt')
@@ -160,13 +191,13 @@ class VolumeData():
             for s in lines:
                 a = s.split()
                 data.append(a)
-            dane = data
+            rawData = data
 
         # Drugi przypadek - dane podane w formacie pickle
         elif ext == '.pckl':
             print('Wykryto plik .pickle')
             with open(filePath, 'rb') as f:
-                dane = pickle.load(f)
+                rawData = pickle.load(f)
 
 
         dane = np.array(dane, dtype="float32")
@@ -202,13 +233,15 @@ class VolumeData():
         "Tworzy kolarz ze wszystkich przekrojów wolumenu"
         # Niech będzie 6 rzędów
         Nz = self._data3D.shape[2]   # Liczba przekrojów
+        maxValue = np.amax(self._data3D)
+        minValue = np.amin(self._data3D)
         rows = 6
         cols = Nz//rows + 1
         fig = plt.figure(self._fileName)
         for index in range(0,Nz):
             ax = fig.add_subplot(rows,cols,index+1)
-            ax.imshow(self.getSlice(sliceNum=index))
-            ax.set_title('Slice ' + str(index))
+            ax.imshow(self.getSlice(sliceNum=index), vmin=minValue, vmax=maxValue)
+            ax.set_title( index )
         
         plt.show()
         
