@@ -34,10 +34,10 @@ class VolumeData():
         return self._data3D
 
     @property
-    def fileName(self):
-        return self, _fileName
+    def dataName(self):
+        return self._dataName
     
-    def __init__(self, inputData, dataType='float'): 
+    def __init__(self, inputData, dataType='uint8'): 
         """
         Tworzy obiekt data3D przechowujący obraz 3D z tomografu.
 
@@ -48,63 +48,81 @@ class VolumeData():
             - macierzy Nx4 (x, y, z, f{x,y,z}) lub PxQxR
 
             dataType (string): do wyboru:
-            - 'float' - dane formatowane do flaot 32 bitowego, wartości z przedziału [0,1] 
+            - 'float' - dane formatowane do flaot 32 bitowego, wartości z przedziału [0,1] - narazie brak
             - 'uint8' - format 8 bitowy, dane z przedziału [0,255]
         
         """
         # Do zaimplementowania - różne typy danych. W sumie lepiej jak będzie uint8 - znana z góry liczba możliwych wartości
         # Trzeba też uwzględnić możliwość tworzenia obiektów na podstawie macierzy
-        ext = os.path.splitext(inputData)[1]     # Pobranie nazwy pliku i rozszerzenia
+        rawdata = []
 
-        # Kontrola poprawności danych 
-        # Jeśli zły typ danych wejściowych to zwrócenie None
-        if not (isinstance(inputData, np.ndarray) or isinstance(inputData, str)):
+        # Użytkownik podał ścieżkę do pliku
+        if isinstance(inputData, str):
+            ext = os.path.splitext(inputData)[1]     # Pobranie nazwy pliku i rozszerzenia
+            
+            if ext == '.pckl':
+                print('Wczytuję dane z pliku pckl...')
+                rawData = np.load(inputData)
+
+            elif ext == '.txt':
+                print('Wczytuję dane txt...')
+                rawData = np.loadtxt(inputData)
+
+
+            else:
+                print('Niepoprawna ścieżka do pliku z danymi. Dozwolone są ścieżki z rozszerzeniami .txt lub .pckl')
+                return None
+            
+            self._dataName = os.path.basename(os.path.normpath(inputData))
+
+        # Użytkownik podał macierz 
+        elif isinstance(inputData, np.ndarray):
+            print('Wczytuję dane z macierzy...')
+            rawData = inputData
+            self._dataName = "Dane"
+
+        # Jeśli nie podano macierzy ani ścieżki
+        else:
             print(f'Zły typ danych wejściowych inputData. Oczekiwane: numpy.array lub str. Podano {type(a)}.')
             return None
 
-        # Jeśli ścieżka nie ma rozszerzenia txt lub None
-        if ext is not '.txt' and ext is not '.pickle':
-            print('Niepoprawna ścieżka do pliku z danych. Dozwolone są ścieżki z rozszerzeniami .txt lub .pckl')
-            return None
+        # Formatowanie danych do macierzy 3D uint8
+         
+        ksztalt = rawData.shape
+        if len(ksztalt) == 2:
+            if ksztalt[0] > 0 and ksztalt[1] == 4:      # Dane w formacie Nx4
+                rawData = points2Img3D(rawData)
+                print('Konwersja do wolumenu 3D')
+            else:
+                print('Niepoprawny format danych.')
+                return None
 
-        # Jeśli podano zły typ danych WYJŚCIOWYCH to zwrócenie None
-        if  dataType is not 'float' and dataType is not 'uint8':
-            print(f'Niepoprawny typ danych. Oczekiwano float lub uint8. Podano {dataType}.')
-            return None
-
-
-        self._fileName = os.path.basename(os.path.normpath(inputData))
-        rawData = []   # Pusta macierz
-
-        if ext == '.txt':        # Dane podane w formacie tekstowym
-            print('Wykryto plik .txt')
-            with open(filePath) as f:
-                lines = f.readlines()
-            data = []
-            for s in lines:
-                a = s.split()
-                data.append(a)
-            rawData = data
-
-        # Drugi przypadek - dane podane w formacie pickle
-        elif ext == '.pckl':
-            print('Wykryto plik .pickle')
-            with open(filePath, 'rb') as f:
-                rawData = pickle.load(f)
-
-
-        dane = np.array(dane, dtype="float32")
-        if len(dane[0]) == 4 and len(dane.shape) == 2:   # Sprawdzenie czy 2 wymiary i 4 kolumny
-            self._data3D = points2Img3D(dane)  # Konwersja do wolumenu 3D 
-            print('2 wymiary, 4 kolumny - konwersja do wolumenu 3D')
-            print(f'Dane mają wymiary: {self._data3D.shape}')
-        elif len(dane.shape) == 3:   # Sprawdzenie czy 3 wymiary   
-            self._data3D = dane              # Nic nie zmieniać 
-            print('3 wymiary - nie zmieniać')
-            print(f'Dane mają wymiary: {self._data3D.shape}')
+        elif len(ksztalt) == 3:
+            print('Brak konwersji - dane w formacie 3D')
+            
         else:
-            self = None
-            print('Niepoprawny typ danych')
+            print('Niepoprawny format danych. Wymagany Nx4 lub KxLxM')
+            return None
+
+        print(f'Dane mają wymiary: {rawData.shape}')
+
+        # Jak zostanie czasu to zaimplementować float zamiast uint8
+        if isinstance(rawData.flat[0], np.float):
+            if np.min(rawData) >= 0 and np.max(rawData) <= 1:
+                print('Konwersja danych do uint8')
+                rawData = np.array(255*rawData, dtype='uint8')
+            else:
+                print('Niepoprawny typ danych. Wymagany np.float (wartości 0-1 lub np.integer 0-255)')
+                return None
+
+        elif isinstance(rawData.flat[0], np.integer) or isinstance(rawData.flat[0], np.uint8):
+            if np.min(rawData) >= 0 and np.max(rawData) <= 255:
+                rawData = np.array(rawData, dtype='uint8')
+            else:
+                print('Niepoprawny typ danych. Wymagany np.float (wartości 0-1 lub np.integer 0-255)')
+                return None
+
+        self._data3D = rawData
         
 
     def savePickle(self, filePath = __name__ + 'Data.pckl'):    
@@ -130,7 +148,7 @@ class VolumeData():
         minValue = np.amin(self._data3D)
         rows = 6
         cols = Nz//rows + 1
-        fig = plt.figure(self._fileName)
+        fig = plt.figure(self._dataName)
         for index in range(0,Nz):
             ax = fig.add_subplot(rows,cols,index+1)
             ax.imshow(self.getSlice(sliceNum=index), vmin=minValue, vmax=maxValue)
@@ -139,7 +157,7 @@ class VolumeData():
         plt.show()
 
 
-def segmentData(image, ths):
+def segmentDataByThresholds(image, ths):
     """Segmentuje obraz 2d lub 3d w odniesieniu do progów podanych jako argumenty"""
 
     ths = sorted(ths)   # Na wszelki wypadek sortowanko
