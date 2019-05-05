@@ -176,7 +176,6 @@ def segmentDataByThresholds(image, ths):
 
     # Kolory
     # kolory = []
-    # [kolory.append(x) for x in itertools.product([0,255], repeat=3)]
 
     # Zmiana do kolorów w skali szarości
     kolory = np.linspace(0, 255, len(ths) + 1, dtype='uint8')   # Równo rozłożone wartości od czarnego do białego
