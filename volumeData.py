@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import random
 import itertools
 from timeit import default_timer as timer
+from skimage.filters import threshold_yen
+from lib import threshOtsu, points2Img3D
 
 class VolumeData():
     """
@@ -131,6 +133,7 @@ class VolumeData():
         with open(filePath, 'wb') as f:
 	        pickle.dump(self._data3D, f)
 
+
     def getSlice(self, sliceNum=None, deep=None):     
         "sliceNum - numer przekroju, deep - 'głębokość w objętości podana jako liczba z przedziału (0,1)"
         if sliceNum != None and deep == None:
@@ -140,6 +143,7 @@ class VolumeData():
             return self._data3D[:,:,sliceNum]
         else:
             print('getSlice: Niepoprawna liczba argumentów')
+
 
     def showAllSlicesInOne(self, title = None):
         "Tworzy kolarz ze wszystkich przekrojów wolumenu"
@@ -160,95 +164,106 @@ class VolumeData():
         plt.show()
 
 
-def segmentDataByThresholds(image, ths):
-    """Segmentuje obraz 2d lub 3d w odniesieniu do progów podanych jako argumenty"""
+    def yenSegment(self):
+        """
+        Wykonuje segmentację metodą Yen'a
 
-    maxThs = 8
-    if not isinstance(ths, list):
-        ths = [ths]
+        Wartość zwracana
+            Posegmentowana macierz 3D: VolumeData
+        """
+        thresh = threshold_yen(self._data3D)
+        segVolume = self.segmentDataByThresholds(thresh)
 
-    if len(ths) > 1:
-        ths = sorted(ths)   # Na wszelki wypadek sortowanko
+        return segVolume
 
-    if len(ths) > maxThs:
-        print('Nie obsługujemy tylu możliwych progów. Pozdrawiamy, ekipa segmentData.')
-        return None
 
-    # Kolory
-    # kolory = []
+    def otsu_iterSegment(self, iterCount=3):
+        """
+        Wykonuje segmentację algorytmem Otsu iteracyjnie
+        Wartość zwracana
+            Posegmentowana macierz 3D: VolumeData
+        """
+        thresh = 0
+        threshList = []
+        for i in range(iterCount):
+            thresh = threshOtsu(self._data3D, thresh)
+            threshList.append(thresh)
+        
+        segVolume = self.segmentDataByThresholds(threshList)
+        print('Znalezione prgi: ', threshList)
+        
+        return segVolume
 
-    # Zmiana do kolorów w skali szarości
-    kolory = np.linspace(0, 255, len(ths) + 1, dtype='uint8')   # Równo rozłożone wartości od czarnego do białego
-    print('Kolory:', kolory)
 
-    segData = np.zeros(image.shape, dtype='uint8')
-    
-#    Kolorowanie element po elemencie - najmniej efektywna metoda na świecie
-    if len(image.shape) == 3:
-        print('Dane 3 wymiarowe')
-    else:
-        print('Dane 2-wymiarowe')
+    def segmentDataByThresholds(self, ths):
+        """Segmentuje obraz 2d lub 3d w odniesieniu do progów podanych jako argumenty"""
 
-    # Wersja 1
+        image = self._data3D
+        maxThs = 8
+        if not hasattr(ths, "__len__"):
+            ths = [ths]
 
-    # for i in range(image.shape[0]):
-    #     for j in range(image.shape[1]):
+        if len(ths) > 1:
+            ths = sorted(ths)   # Na wszelki wypadek sortowanko
+
+        if len(ths) > maxThs:
+            print('Nie obsługujemy tylu możliwych progów. Pozdrawiamy, ekipa segmentData.')
+            return None
+
+        # Kolory
+        # kolory = []
+
+        # Zmiana do kolorów w skali szarości
+        kolory = np.linspace(0, 255, len(ths) + 1, dtype='uint8')   # Równo rozłożone wartości od czarnego do białego
+        print('Kolory:', kolory)
+
+        segData = np.zeros(image.shape, dtype='uint8')
+        
+    #    Kolorowanie element po elemencie - najmniej efektywna metoda na świecie
+        if len(image.shape) == 3:
+            print('Dane 3 wymiarowe')
+        else:
+            print('Dane 2-wymiarowe')
+
+        # Wersja 1
+
+        # for i in range(image.shape[0]):
+        #     for j in range(image.shape[1]):
+                
+        #         # Wolumen 3D
+        #         if len(image.shape) == 3:     
+        #             for k in range(image.shape[2]):
+        #                 if image[i,j,k] < ths[0]:
+        #                     segData[i,j,k] = kolory[0]
+        #                 for t in range(len(ths) - 1):
+        #                     if image[i,j,k] >= ths[t] and image[i,j,k] < ths[t+1]:
+        #                         segData[i,j,k] = kolory[t+1]
+        #                 if image[i,j,k] >= ths[-1]:
+        #                     segData[i,j,k] = kolory[-1]
             
-    #         # Wolumen 3D
-    #         if len(image.shape) == 3:     
-    #             for k in range(image.shape[2]):
-    #                 if image[i,j,k] < ths[0]:
-    #                     segData[i,j,k] = kolory[0]
-    #                 for t in range(len(ths) - 1):
-    #                     if image[i,j,k] >= ths[t] and image[i,j,k] < ths[t+1]:
-    #                         segData[i,j,k] = kolory[t+1]
-    #                 if image[i,j,k] >= ths[-1]:
-    #                     segData[i,j,k] = kolory[-1]
-           
-    #         # Obraz 2D
-    #         else:
-    #             if image[i,j] < ths[0]:
-    #                 segData[i,j] = kolory[0]
-    #             for t in range(len(ths) - 1):
-    #                 if image[i,j] >= ths[t] and image[i,j] < ths[t+1]:
-    #                     segData[i,j] = kolory[t+1]
-    #             if image[i,j] > ths[-1]:
-    #                 segData[i,j] = kolory[-1]
+        #         # Obraz 2D
+        #         else:
+        #             if image[i,j] < ths[0]:
+        #                 segData[i,j] = kolory[0]
+        #             for t in range(len(ths) - 1):
+        #                 if image[i,j] >= ths[t] and image[i,j] < ths[t+1]:
+        #                     segData[i,j] = kolory[t+1]
+        #             if image[i,j] > ths[-1]:
+        #                 segData[i,j] = kolory[-1]
 
 
-    # Wersja 2 - oszczędność czasowa 155x
+        # Wersja 2 - oszczędność czasowa 155x
+        
+        d0 = np.where(image < ths[0])    # Indeksy, dla których obraz ma wartość < ths[0]
+        segData[d0] = kolory[0]
+
+        for t in range(len(ths) - 1):
+            logicTrue = np.logical_and(image >= ths[t], image < ths[t+1])
+            di = np.where(logicTrue)
+            segData[di] = kolory[t]
+
+        dn = np.where(image >= ths[-1])
+        segData[dn] = kolory[-1]
     
-    d0 = np.where(image < ths[0])    # Indeksy, dla których obraz ma wartość < ths[0]
-    segData[d0] = kolory[0]
+        return VolumeData(segData)
 
-    for t in range(len(ths) - 1):
-        logicTrue = np.logical_and(image >= ths[t], image < ths[t+1])
-        di = np.where(logicTrue)
-        segData[di] = kolory[t]
-
-    dn = np.where(image >= ths[-1])
-    segData[dn] = kolory[-1]
- 
-    return segData
-
-def points2Img3D(rawData):
-    """
-    Konwertuje wolumem 3D z postaci N x {x,y,z,f(x,y,z)} do postaci sqrt(Nx) x sqrt(Ny) x Nz
-    """
-
-    ind = np.lexsort((rawData[:,2], rawData[:,1], rawData[:,0]))    # Sortowanie danych
-    rawData = rawData[ind]
-    
-    Nx = len(set(rawData[:,0]))
-    Ny = len(set(rawData[:,1]))
-    Nz = len(set(rawData[:,2]))
-    
-    licz = 0
-    img3D = np.zeros((Nx,Ny,Nz))
-    for i in range(Nx):
-        for j in range(Ny):
-            for k in range(Nz):
-                img3D[Ny-1-j,i,k] = rawData[licz,3]          # Przekopiowanie danych
-                licz += 1
-    
-    return img3D
