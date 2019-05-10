@@ -16,3 +16,5 @@ Organizacja projektu:
   - wyświetlenie pojedynczego przekroju
   - zapis obrazu do pliku
 * W pliku lib.py znajdują się pozostałe użyteczne funkcje oraz zmienne typu string z tekstami wyświetlanymi użytkownikowi
+
+Program uruchamia się wywołując skrypt SegmentujObrazyJPET.py - python SegmentujObrazyJPET.py. Spowoduje to wywołanie interaktywnej mini konsoli do komunikacji z użytkownikem.
