@@ -7,11 +7,36 @@ Główny plik projektu. Obsługuje komunikację z użytkownikiem. Można wywoły
 import sys
 import os
 from lib import *
-from algorytmy
+from algorytmy import *
+from volumeData import VolumeData
 
 
 def segmentuj(alg, pathToVol):
+    """
+    Funkcja odpowiadająca za segmentację.
+    Argumenty
+        alg: string - jeden z algorytmów: 'yen', 'otsu-iter', 'otsu-region'
+        pathToVol: string - ścieżka do pliku z segmentacją
+    Wartość zwracana
+        Ścieżka do pliku z przekrojami po segmentacji
+        Oprócz tego te przekroje zostaną wyświetlone
+    """
+    image3D = VolumeData(pathToVol)
+    if image3D is None:
+        print('[segmentuj] Błąd: Niepoprawna ścieżka do pliku')
+        return None
+
+    if alg == 'yen':
+        segImage = image3D.yenSegment() # typ: VolumeData
+    elif alg == 'otsu-iter':
+        segImage = image3D.otsu_iterSegment()
+    elif alg == 'otsu-region':
+        image3D.otsu_regionSegment()
+
+    # Pokazanie przekrojów po segmentacji
+    slices = segImage.showAllSlicesInOne(title =f'Wynik segmentacji algorytmem  {alg}')
     
+    return slices
 
 
 ###########################################
