@@ -10,7 +10,7 @@ Segmentacja wykonywana jest następującymi metodami:
 Organizacja projektu:
 * Program główny i komunikacja z użytkownikiem znajduje się w pliku SegmentujObrazyJPET.py
 * W pliku volumeData.py znajduje się implementacja klasy VolumeData, która odpowiada za operacje na obrazie, w tym:
-  - wczytywnaie obrazu z pliku tekstowego oraz pckl lub z macierzy
+  - wczytywanie obrazu z pliku tekstowego oraz pckl lub z macierzy
   - segmentacja wyżej wymienionymi algorytmami
   - wyświetlenie przekrojów obrazu
   - wyświetlenie pojedynczego przekroju
