@@ -7,7 +7,6 @@ Główny plik projektu. Obsługuje komunikację z użytkownikiem. Można wywoły
 import sys
 import os
 from lib import *
-from algorytmy import *
 from volumeData import VolumeData
 
 
@@ -67,11 +66,15 @@ if len(argList) == 1:
             elif userInput[0] == 'run':
                 if len(userInput) == 3:
                     if userInput[1] == 'yen' or userInput[1] == 'otsu-region' or userInput[1] == 'otsu-iter':
-                        ext = os.path.splitext(userInput[2])
+                        ext = os.path.splitext(userInput[2])[1]
                         if ext == '.txt' or ext == '.pckl':
-                            segmentuj(*userInput[1:])
+                            sciezkaSegmentacja = segmentuj(*userInput[1:])
+                            if sciezkaSegmentacja is not None:
+                                print('Obraz z posegmentowanym wolumem został zapisany w', sciezkaSegmentacja)
+                            else:
+                                print('Błąd segmentacji.')
                         else:
-                            print('Niepoprawne rozszerzenie pliku rekonstrukcji.')
+                            print('Niepoprawne ścieżka lub rozszerzenie pliku rekonstrukcji.')
                             print(infoRun)
                     else:
                         print('Niepoprawny algorytm.')
