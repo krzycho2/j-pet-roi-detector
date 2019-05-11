@@ -11,6 +11,9 @@ files = getListOfFiles(fantomPath + '/Nowe-reko')
 volList = []
 leng = len(files)
 
+# Wydrukowanie ścieżek do plików
+print('\n'.join(files))
+
 # Wczytanie danych do listy obiektów VolumeData
 for i in range(leng):
     print(f'Rekonstrukcja nr {i} z {leng}')
