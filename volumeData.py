@@ -162,6 +162,8 @@ class VolumeData():
             ax.set_title( index )
         
         plt.show()
+        
+        return self._dataName
 
 
     def yenSegment(self):
