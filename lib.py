@@ -30,71 +30,86 @@ def threshOtsu(image, start_point=0):
     
     return threshold
 
-def otsuMultiThresh(image):
-    maxVal = 256
-    
-    # Histogram
-    # hist = np.histogram(image, bins=maxVal)[0]
+def pointsInRadius(sPoint, radius):
+    """
+    Tworzy zbiór (listę) punktów odległych od punktu środkowego sPoint o promień radius. 
+    Fizycznie będzie to zbiór punktów płaszczyzny kwadratu o boku 2*radius + 1, w którego centroidzie znajduje się sPoint. 
+    """
+    points = []
+    if radius == 0:
+        points = [sPoint]
+    else:
         
-    N = 0 # Licznik niezerowych punktów
-    hist = np.zeros(maxVal)
-    for i in range(h):
-        for j in range(w):
-            val = slice75[i,j]
-            if val != 0:
-                hist[val] += 1
-                N += 1
-
-    # N = 1
-    # for s in image.shape:   # 2d lub 3d
-    #     N *= s
-    
-    w0k, w1k, w2k   = 0,0,0       # Jakieś wagi, double
-    m0k, m1k, n2k   = 0,0,0       # Średnie 
-    m0, m1, m2      = 0,0,0
-    m0k, m1k, mt    = 0,0,0
-    currVar         = 0
-    thresh1, thresh2= 0,0
-    maxBetweenVar   = 0
-
-    for k in range(maxVal):
-        mt += k * hist[k] / N
-
-    # plt.plot(np.arange(256), hist)
-    # plt.show()
-
-
-    for t1 in range(maxVal):
-        w0k += hist[t1] / N
-        m0k += t1 * hist[t1] / N
-        m0 = m0k / w0k
-        # print(f't1: {t1}, hist[t1]: {hist[t1]}, w0k: {w0k}, m0k: {m0k}, m0: {m0}')
-
-        w1k, m1k = 0,0
-        for t2 in range(t1+1, maxVal):
-            w1k += hist[t2] / N
-            m1k += t2 * hist[t2] / N
-            m1 = m1k / w1k
-            # print(f'    t2: {t2}, hist[t2]: {hist[t2]}, w1k: {w1k}, m1k: {m1k}, m1: {m1}')
-
-            w2k = 1 - (w0k + w1k)
-            m2k = mt - (m0k + m1k)
+        # Przypadek 2D
+        if len(sPoint) == 2:
+            # Dodanie pionowych
+            for row in [sPoint[0] - radius, sPoint[0] + radius]:
+                [points.append([row, col]) for col in range(sPoint[1] - radius, sPoint[1] + radius + 1)]
             
-            if w2k <= 0:
-                # print('w2k < 0')
-                break
-            m2 = m2k / w2k
-            # print(f'    w2k: {w2k}, m2k: {m2k}, m2: {m2}')
+            # Dodanie poziomych
+            for col in [sPoint[1] - radius, sPoint[1] + radius]:
+                [points.append([row, col]) for row in range(sPoint[0] - radius + 1, sPoint[0] + radius)]
+            
+        # Przypadek 3D
+        else:
+            z = sPoint[2]
+            for row in [sPoint[0] - radius, sPoint[0] + radius]:
+                [points.append([row, col, z]) for col in range(sPoint[1] - radius, sPoint[1] + radius + 1)]
 
-            currVar = w0k * (m0 - mt)**2 + w1k * (m1 - mt)**2 + w2k * (m2 - mt)**2
-            # print(f'    currVar: {currVar}')
+            for col in [sPoint[1] - radius, sPoint[1] + radius]:
+                [points.append([row, col, z]) for row in range(sPoint[0] - radius + 1, sPoint[0] + radius)]
 
-            if maxBetweenVar < currVar:
-                maxBetweenVar = currVar
-                thresh1 = t1
-                thresh2 = t2
+            for z in [sPoint[2] - radius, sPoint[2] + radius]:
+                for row in range(sPoint[0] - radius, sPoint[0] + radius + 1):
+                    for col in range(sPoint[1] - radius, sPoint[1] + radius + 1):
+                        points.append([row, col, z])
 
-        return (thresh1, thresh2)
+    return points
+
+def belongsToArr(p, arr):
+    """
+    Sprawdza czy punkt lub zbiór punktów należy(należą) do macierzy.
+    Jeśli p: punkt (2D lub 3D) to:
+        True, jeśli punkt należy do macierzy
+        False wpp
+    Jeśli p: zbiór punktów (2D lub 3D) to:
+        True, jeśli PRZYNAJMNIEJ JEDEN punkt należy do macierzy
+        False, jeśli ŻADEN punkt nie należy do macierzy 
+    """
+    p = np.array(p)
+    if len(p.shape) == 1:
+        # punkt
+        if len(p) == 2:     # 2D
+            # Dorobić wyjątki gdy wymiary się nie zgadzają
+            logic = p[0] >= 0 and p[0] < arr.shape[0] and p[1] >= 0 and p[1] < arr.shape[1]
+            if logic:
+                return True
+            else:
+                return False
+        
+        else:       # 3D
+            logic = p[0] >= 0 and p[0] < arr.shape[0] and p[1] >= 0 and p[1] < arr.shape[1] and p[2] >= 0 and p[2] < arr.shape[2]
+            if logic:
+                return True
+            else:
+                return False
+        
+    else:
+        # zbiór punktów. Sprawdzamy, czy choć jeden punkt/woksel jest na macierzy
+        if len(p[0]) == 2:  # 2D
+            for point in p:
+                logic = point[0] >= 0 and point[0] < arr.shape[0] and point[1] >= 0 and point[1] < arr.shape[1]
+                if logic:
+                    return True
+            return False
+        
+        else:       # 3D
+            for point in p:
+                logic = point[0] >= 0 and point[0] < arr.shape[0] and point[1] >= 0 and point[1] < arr.shape[1] and point[2] >= 0 and point[2] < arr.shape[2]
+                if logic:
+                    return True
+           
+            return False    
 
 def points2Img3D(rawData):
     """
