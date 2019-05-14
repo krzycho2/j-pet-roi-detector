@@ -224,6 +224,11 @@ def arr2img(arr):
             licz += 1
     return img
 
+
+#########
+# STAŁE #
+#########
+
 KROTKIE_INFO = """
             Program SegmentujObrazyJPET
             by Krzysztof Krupiński 2019
