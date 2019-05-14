@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square
-from lib import threshOtsu, points2Img3D, belongsToArr, pointsInRadius
+import lib
 
 class VolumeData():
     """
@@ -96,7 +96,7 @@ class VolumeData():
         ksztalt = rawData.shape
         if len(ksztalt) == 2:
             if ksztalt[0] > 0 and ksztalt[1] == 4:      # Dane w formacie Nx4
-                rawData = points2Img3D(rawData)
+                rawData = lib.points2Img3D(rawData)
                 print('Konwersja do wolumenu 3D')
             else:
                 print('Niepoprawny format danych.')
@@ -190,7 +190,7 @@ class VolumeData():
         thresh = 0
         threshList = []
         for i in range(iterCount):
-            thresh = threshOtsu(self._data3D, thresh)
+            thresh = lib.threshOtsu(self._data3D, thresh)
             threshList.append(thresh)
         
         segVolume = self.segmentDataByThresholds(threshList)
@@ -251,15 +251,15 @@ class VolumeData():
             # Pętla po pikselach/wokselach. Wychodząc z punktu startPoint promieniście rozchodzi się algorytm.
             while(True):
                 print(f'Promień: {R}')
-                points = pointsInRadius(startPoint, R)
-                if not belongsToArr(points, img):    # Sprawdzenie, czy przynajmniej jeden punkt należy do macierzy
+                points = lib.pointsInRadius(startPoint, R)
+                if not lib.belongsToArr(points, img):    # Sprawdzenie, czy przynajmniej jeden punkt należy do macierzy
                     print('Wyjście poza macierz wszystkich punktów.')
                     break
 
                 licznikTrafien = 0
                 for p in points:
                     # p - współrzędne punktu 
-                    if belongsToArr(p, img):
+                    if lib.belongsToArr(p, img):
                         print(f'Punkt {p}: {img[p[0], p[1], p[2]]}')
                         if trzyDe:
                             tempWynik = abs(img[p[0], p[1], p[2]] - avg)
@@ -309,6 +309,14 @@ class VolumeData():
         segImage = VolumeData(newImg)
         return segImage
 
+    def otsuMultiThreshSegment(self):
+        """
+        Segmentuje obraz za pomocą wielowartościowego (2) progowania Otsu.
+        """
+        thresholds = lib.multiThreshOtsu(self._data3D)
+        segImage = self.segmentDataByThresholds(thresholds)
+
+        return segImage
 
     def segmentDataByThresholds(self, ths):
         """Segmentuje obraz 2d lub 3d w odniesieniu do progów podanych jako argumenty"""
@@ -333,49 +341,14 @@ class VolumeData():
         print('Kolory:', kolory)
 
         segData = np.zeros(image.shape, dtype='uint8')
-        
-    #    Kolorowanie element po elemencie - najmniej efektywna metoda na świecie
-        if len(image.shape) == 3:
-            print('Dane 3 wymiarowe')
-        else:
-            print('Dane 2-wymiarowe')
-
-        # Wersja 1
-
-        # for i in range(image.shape[0]):
-        #     for j in range(image.shape[1]):
-                
-        #         # Wolumen 3D
-        #         if len(image.shape) == 3:     
-        #             for k in range(image.shape[2]):
-        #                 if image[i,j,k] < ths[0]:
-        #                     segData[i,j,k] = kolory[0]
-        #                 for t in range(len(ths) - 1):
-        #                     if image[i,j,k] >= ths[t] and image[i,j,k] < ths[t+1]:
-        #                         segData[i,j,k] = kolory[t+1]
-        #                 if image[i,j,k] >= ths[-1]:
-        #                     segData[i,j,k] = kolory[-1]
-            
-        #         # Obraz 2D
-        #         else:
-        #             if image[i,j] < ths[0]:
-        #                 segData[i,j] = kolory[0]
-        #             for t in range(len(ths) - 1):
-        #                 if image[i,j] >= ths[t] and image[i,j] < ths[t+1]:
-        #                     segData[i,j] = kolory[t+1]
-        #             if image[i,j] > ths[-1]:
-        #                 segData[i,j] = kolory[-1]
-
-
-        # Wersja 2 - oszczędność czasowa 155x
-        
+    
         d0 = np.where(image < ths[0])    # Indeksy, dla których obraz ma wartość < ths[0]
         segData[d0] = kolory[0]
 
         for t in range(len(ths) - 1):
             logicTrue = np.logical_and(image >= ths[t], image < ths[t+1])
             di = np.where(logicTrue)
-            segData[di] = kolory[t]
+            segData[di] = kolory[t+1]
 
         dn = np.where(image >= ths[-1])
         segData[dn] = kolory[-1]
