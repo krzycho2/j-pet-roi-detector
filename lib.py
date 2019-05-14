@@ -224,7 +224,7 @@ def arr2img(arr):
             licz += 1
     return img
 
-krotkieInfo = """
+KROTKIE_INFO = """
             Program SegmentujObrazyJPET
             by Krzysztof Krupiński 2019
 Poprawne wywołanie segmentacji:
@@ -236,7 +236,7 @@ python SegmentujObrazyJPET.py [yen | otsu-region | otsu-iter] [ścieżka_do_plik
 python SegmentujObrazyJPET.py
 """
 
-tekstPowitalny = """ 
+TEKST_POWITALNY = """ 
             Witamy w programie SegmentujObrazyJPET
                 by Krzysztof Krupiński 2019
  
@@ -270,7 +270,7 @@ lub ctrl+c.
 
     """
 
-info = """
+INFO = """
 Możliwe polecenia:
 
 info [yen | otsu-region | otsu-iter]
@@ -278,24 +278,24 @@ run [yen | otsu-region | otsu-iter] [ścieżka_do_pliku_z_rekonstrukcją]
 exit
 """
 
-infoInfo = """ Informacje o algorytmie można uzyskać wpisując
+INFO_INFO = """ Informacje o algorytmie można uzyskać wpisując
 
 info [yen | otsu-region | otsu-iter]
 """
-infoRun = """ Segmentację wykonuje się wpisując
+INFO_RUN = """ Segmentację wykonuje się wpisując
 
 run [yen | otsu-region | otsu-iter] [ścieżka_do_pliku_z_rekonstrukcją]
 
 gdzie ścieżka musi mieć rozszerzenie .txt lub .pckl
 """
 
-infoYen = """
+INFO_YEN = """
 Algorytm segmentacji Yen
 """
 
-infoOtsuRegion = """
-Algorytm Otsu Region Growing
+INFO_YEN_REGION = """
+Algorytm Region Growing w połączeniu z progowaniem Yen'a
 """
 
-infoOtsuIter = """
+INFO_OTSU_ITER = """
 Algorytm Otsu iteracyjny"""
