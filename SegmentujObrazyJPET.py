@@ -54,18 +54,18 @@ if len(argList) == 1:
             if userInput[0] == 'info':
                 if len(userInput) == 2:
                     if userInput[1] == 'yen':
-                        print(infoYen)
-                    elif userInput[1] == 'otsu-region':
-                        print(infoOtsuRegion)
+                        print(INFO_YEN)
+                    elif userInput[1] == 'yen-region':
+                        print(INFO_YEN_REGION)
                     elif userInput[1] == 'otsu-iter':
-                        print(infoOtsuIter)
+                        print(INFO_OTSU_ITER)
                     else:
-                        print(infoInfo)
+                        print(INFO_INFO)
                 else:
-                    print(infoInfo)
+                    print(INFO_INFO)
             elif userInput[0] == 'run':
                 if len(userInput) == 3:
-                    if userInput[1] == 'yen' or userInput[1] == 'otsu-region' or userInput[1] == 'otsu-iter':
+                    if userInput[1] == 'yen' or userInput[1] == 'yen-region' or userInput[1] == 'otsu-iter':
                         ext = os.path.splitext(userInput[2])[1]
                         if ext == '.txt' or ext == '.pckl':
                             sciezkaSegmentacja = segmentuj(*userInput[1:])
@@ -75,19 +75,19 @@ if len(argList) == 1:
                                 print('Błąd segmentacji.')
                         else:
                             print('Niepoprawne ścieżka lub rozszerzenie pliku rekonstrukcji.')
-                            print(infoRun)
+                            print(INFO_RUN)
                     else:
                         print('Niepoprawny algorytm.')
-                        print(infoRun)
+                        print(INFO_RUN)
                 else:
-                    print(infoRun)
+                    print(INFO_RUN)
             elif userInput[0] == 'exit':
                 print('Dziękujemy za skorzystanie z programu.')
                 break
             else:
-                print(info)
+                print(INFO)
         else:
-            print(tekstPowitalny)
+            print(TEKST_POWITALNY)
 
 elif len(argList) == 3:
     if userInput[1] == 'yen' or userInput[1] == 'otsu-region' or userInput[1] == 'otsu-iter':
@@ -96,11 +96,11 @@ elif len(argList) == 3:
             segmentuj(*userInput[1:])
         else:
             print('Niepoprawne rozszerzenie pliku rekonstrukcji.')
-            print(krotkieInfo)
+            print(KROTKIE_INFO)
     else:
         print('Niepoprawny algorytm.')
-        print(krotkieInfo)
+        print(KROTKIE_INFO)
 else:
     print('Niepoprawne wywołanie.')
-    print(krotkieInfo)
+    print(KROTKIE_INFO)
 
