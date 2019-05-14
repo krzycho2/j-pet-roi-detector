@@ -6,6 +6,64 @@ import os
 # import itertools
 # Różne przydatne metody
 
+def multiThreshOtsu(image):
+    """
+    Narazie dla 2D i nie do końca działa. Będzie wkrótce...
+    """
+    N = np.count_nonzero(image != 0)
+    hist = np.histogram(image, bins=maxVal)[0]
+    hist[0] = 0         # Nie uwzględnianie zera
+
+    w0k, w1k, w2k   = 0,0,0       # Jakieś wagi, double
+    m0k, m1k, n2k   = 0,0,0       # Średnie 
+    m0, m1, m2      = 0,0,0
+    m0k, m1k, mt    = 0,0,0
+    currVar         = 0
+    thresh1, thresh2= 0,0
+    maxBetweenVar   = 0
+
+    # Oryginał
+    # for k in range(maxVal):
+    #         mt += k * hist[k] / N
+
+    # for k in range(maxVal):
+    #     mt += k * hist[k] / N
+
+    mt2 = np.sum(np.arange(maxVal) * hist / N)
+
+    for t1 in range(maxVal):
+        w0k += hist[t1] / N
+        m0k += t1 * hist[t1] / N
+        m0 = m0k / w0k
+        # print(f't1: {t1}, hist[t1]: {hist[t1]}, w0k: {w0k}, m0k: {m0k}, m0: {m0}')
+
+        w1k, m1k = 0,0
+        for t2 in range(t1+1, maxVal):
+            w1k += hist[t2] / N
+            m1k += t2 * hist[t2] / N
+            m1 = m1k / w1k
+            # print(f'    t2: {t2}, hist[t2]: {hist[t2]}, w1k: {w1k}, m1k: {m1k}, m1: {m1}')
+
+            w2k = 1 - (w0k + w1k)
+            m2k = mt - (m0k + m1k)
+            
+            if w2k <= 0:
+                # print('w2k < 0')
+                break
+            m2 = m2k / w2k
+            # print(f'    w2k: {w2k}, m2k: {m2k}, m2: {m2}')
+
+            currVar = w0k * (m0 - mt)**2 + w1k * (m1 - mt)**2 + w2k * (m2 - mt)**2
+            # print(f'    currVar: {currVar}')
+
+            if maxBetweenVar < currVar:
+                maxBetweenVar = currVar
+                thresh1 = t1
+                thresh2 = t2
+
+    return [thresh1, thresh2]
+
+    
 def threshOtsu(image, start_point=0):
     
     nbins = 256 - start_point
