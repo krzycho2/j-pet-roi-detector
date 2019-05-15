@@ -23,9 +23,9 @@ Organizacja projektu:
 
 Program uruchamia się wywołując skrypt SegmentujObrazyJPET.py - python SegmentujObrazyJPET.py. Spowoduje to wywołanie interaktywnej mini konsoli do komunikacji z użytkownikem.
 
-  #########
-#  English   #
-  #########
+#########
+ English
+#########
 
 The aim of the project is to find Regions Of Interest (ROI) on volumes created during reconstruction of PET Tomography imaging.
 
