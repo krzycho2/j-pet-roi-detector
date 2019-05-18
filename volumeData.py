@@ -9,6 +9,7 @@ from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square
 import lib
+import datetime
 
 class VolumeData():
     """
@@ -64,19 +65,23 @@ class VolumeData():
         # Użytkownik podał ścieżkę do pliku
         if isinstance(inputData, str):
             ext = os.path.splitext(inputData)[1]     # Pobranie nazwy pliku i rozszerzenia
-            
             if ext == '.pckl':
                 print('Wczytuję dane z pliku pckl...')
-                rawData = np.load(inputData)
+                try:
+                    rawData = np.load(inputData)
+                except FileNotFoundError:
+                    raise ValueError
 
             elif ext == '.txt':
                 print('Wczytuję dane txt...')
-                rawData = np.loadtxt(inputData)
-
+                try:
+                    rawData = np.loadtxt(inputData)
+                except FileNotFoundError:
+                    raise ValueError
 
             else:
                 print('Niepoprawna ścieżka do pliku z danymi. Dozwolone są ścieżki z rozszerzeniami .txt lub .pckl')
-                return None
+                raise ValueError
             
             self._dataName = os.path.basename(os.path.normpath(inputData))
 
@@ -89,7 +94,7 @@ class VolumeData():
         # Jeśli nie podano macierzy ani ścieżki
         else:
             print(f'Zły typ danych wejściowych inputData. Oczekiwane: numpy.array lub str. Podano {type(a)}.')
-            return None
+            raise ValueError
 
         # Formatowanie danych do macierzy 3D uint8
          
@@ -100,14 +105,14 @@ class VolumeData():
                 print('Konwersja do wolumenu 3D')
             else:
                 print('Niepoprawny format danych.')
-                return None
+                raise ValueError
 
         elif len(ksztalt) == 3:
             print('Brak konwersji - dane w formacie 3D')
             
         else:
             print('Niepoprawny format danych. Wymagany Nx4 lub KxLxM')
-            return None
+            raise ValueError
 
         print(f'Dane mają wymiary: {rawData.shape}')
 
@@ -118,23 +123,26 @@ class VolumeData():
                 rawData = np.array(255*rawData, dtype='uint8')
             else:
                 print('Niepoprawny typ danych. Wymagany np.float (wartości 0-1 lub np.integer 0-255)')
-                return None
+                raise ValueError
 
         elif isinstance(rawData.flat[0], np.integer) or isinstance(rawData.flat[0], np.uint8):
             if np.min(rawData) >= 0 and np.max(rawData) <= 255:
                 rawData = np.array(rawData, dtype='uint8')
             else:
                 print('Niepoprawny typ danych. Wymagany np.float (wartości 0-1 lub np.integer 0-255)')
-                return None
+                raise ValueError
 
         self._data3D = rawData
-        
 
-    def savePickle(self, filePath = __name__ + 'Data.pckl'):    
+
+    def savePickle(self, filePath):    
         "Zapisuje dane jako plik pickle"
         with open(filePath, 'wb') as f:
 	        pickle.dump(self._data3D, f)
 
+    def saveSlices(self, filePath):
+        fig = self.__makeFigureWithAllSlices()
+        fig.savefig(filePath)
 
     def getSlice(self, sliceNum=None, deep=None):     
         "sliceNum - numer przekroju, deep - 'głębokość w objętości podana jako liczba z przedziału (0,1)"
@@ -146,24 +154,37 @@ class VolumeData():
         else:
             print('getSlice: Niepoprawna liczba argumentów')
 
-
-    def showAllSlicesInOne(self, title = None):
-        "Tworzy kolarz ze wszystkich przekrojów wolumenu"
-        if title == None:
-            title = self._dataName
-        # Niech będzie 6 rzędów
+    def __makeFigureWithAllSlices(self, size = (20,20), figTitle = None):
+        if figTitle == None:
+            figTitle = self._dataName
         Nz = self._data3D.shape[2]   # Liczba przekrojów
         maxValue = np.amax(self._data3D)
         minValue = np.amin(self._data3D)
-        rows = 6
+        rows = int(np.sqrt(Nz))
         cols = Nz//rows + 1
-        fig = plt.figure(title)
+        fig = plt.figure(figsize=size)
+        fig.suptitle(figTitle)
+
         for index in range(0,Nz):
             ax = fig.add_subplot(rows,cols,index+1)
             ax.imshow(self.getSlice(sliceNum=index), vmin=minValue, vmax=maxValue)
             ax.set_title( index )
+            frame = plt.gca()
+            frame.axes.get_xaxis().set_visible(False)
+            frame.axes.get_yaxis().set_visible(False)
+        
+
+        return fig
+
+    def showAllSlices(self, title = None):
+        "Tworzy kolarz ze wszystkich przekrojów wolumenu"
+        if title == None:
+            title = self._dataName
+        # Niech będzie 6 rzędów
+        fig = self.__makeFigureWithAllSlices()
         
         plt.show()
+        fig.savefig()
         
         return self._dataName
 
@@ -179,8 +200,7 @@ class VolumeData():
         segVolume = self.segmentDataByThresholds(thresh)
 
         return segVolume
-
-
+    
     def otsu_iterSegment(self, iterCount=3):
         """
         Wykonuje segmentację algorytmem Otsu iteracyjnie
@@ -195,7 +215,6 @@ class VolumeData():
         
         segVolume = self.segmentDataByThresholds(threshList)
         print('Znalezione prgi: ', threshList)
-        
         return segVolume
 
     def regionGrowingSegment(self, c=2, sigma0=20):
