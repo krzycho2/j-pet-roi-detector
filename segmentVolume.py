@@ -49,20 +49,23 @@ class SegmentVolume():
             raise ValueError
 
         # Stworzenie słownika z algorytmami
-        algortihms = {'yen-thresh':__yenSegmentation, 'region-growing':__regionGrowingSegmentation, 'yen-region':__yenThreshRegionSegmentation, 'otsu-iter':__otsuIterSegmentation, 'otsu-multi':__otsuMultiSegmentation}
+        self.__algorithms = {'yen-thresh': self.__yenSegmentation, 'region-growing':self.__regionGrowingSegmentation, 'yen-region': self.__yenThreshRegionSegmentation, 'otsu-iter': self.__otsuIterSegmentation, 'otsu-multi': self.__otsuMultiSegmentation}
     
         # Ścieżka do pliku z wynikami segmentacji
-        tempPath = './Segmentation_' + str(datetime.datetime.now().date())
+        cwd = os.getcwd()
+        tempPath = cwd + '/Segmentation_' + str(datetime.datetime.now().date())
         if os.path.exists(tempPath):
             num = 1
             while True:
-                tempPathNum = tempPath + '_' + num
+                tempPathNum = tempPath + '_' + str(num)
                 if os.path.exists(tempPathNum):
                     num += 1
                 else:
+                    os.makedirs(tempPathNum)
                     self.__segmentDir = tempPathNum
                     break
         else:
+            os.makedirs(tempPath)
             self.__segmentDir = tempPath
         
 
@@ -87,7 +90,7 @@ class SegmentVolume():
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
-        thresh = threshold_yen(self._data3D)
+        thresh = threshold_yen(self.__rawVolume.data3D)
         segVolume = self.__segmentDataByThresholds(thresh)
 
         return segVolume
@@ -101,7 +104,7 @@ class SegmentVolume():
         thresh = 0
         threshList = []
         for i in range(iterCount):
-            thresh = lib.threshOtsu(self._data3D, thresh)
+            thresh = lib.threshOtsu(self.__rawVolume.data3D, thresh)
             threshList.append(thresh)
         
         segVolume = self.__segmentDataByThresholds(threshList)
@@ -248,7 +251,7 @@ class SegmentVolume():
         Zwraca obiekt typu VolumeData
         """
 
-        image = self._data3D
+        image = self.__rawVolume.data3D
         maxThs = 8
         if not hasattr(ths, "__len__"):
             ths = [ths]
@@ -291,9 +294,10 @@ class SegmentVolume():
             savePath = self.__segmentDir + '/volumeData.pckl'
         self.__segmentedVolume.savePickle(savePath)
 
-    def saveslicesAsPng(self, savepath = None):
+    def saveSlicesAsPng(self, savePath = None):
         if savePath is None:
             savePath = self.__segmentDir + '/volumeSlices.png'
+        self.__segmentedVolume.saveSlices(savePath)
         
 
 
