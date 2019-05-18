@@ -8,9 +8,10 @@ import sys
 import os
 from lib import *
 from volumeData import VolumeData
+from segmentVolume import SegmentVolume
+import argparse
 
-
-def segmentuj(alg, pathToVol):
+def _segmentuj(alg, pathToVol):
     """
     Funkcja odpowiadająca za segmentację.
     Argumenty
@@ -37,11 +38,24 @@ def segmentuj(alg, pathToVol):
     
     return slices
 
+def main(dataPath, algName):
+    seg = SegmentVolume(dataPath)
+
 
 ###########################################
 # PROGRAM #
+parser = argparse.ArgumentParser(description=TEKST_POWITALNY)
+parser.add_argument('alg', type=str, help=INFO_ALG)
+parser.add_argument('datapath', type=str, help=INFO_DATA)
+parser.add_argument('--savePickle', type=str, help=INFO_SAVE_PICKLE)
+parser.add_argument('--saveVolumeSlices', type=str, help=INFO_SAVE_SLICES)
+# parser.add_argument('data-path', metavar='path')
 
+args = parser.parse_args()
+a=args._get_kwargs()
+print('Podano:', args)
 # Program wywołany bez argumentów
+"""
 argList = sys.argv
 if len(argList) == 1:
     print('argList = 1')
@@ -104,3 +118,4 @@ else:
     print('Niepoprawne wywołanie.')
     print(KROTKIE_INFO)
 
+"""
