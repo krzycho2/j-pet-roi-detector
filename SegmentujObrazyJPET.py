@@ -22,12 +22,12 @@ parser.add_argument('--algParams', metavar='PARAMS_TO_PASS_TO_ALG', nargs='+')
 # Main
 args = parser.parse_args()
 a=args._get_kwargs()
-print('Podano:', args)
+print('Podano:', args)      # Opcjonalne
 segObj = SegmentVolume(args.dataPath)
 segObj.segmentation(args.alg, args.algParams)
 if args.savePickle:
-    segObj.saveVolumeAsPickle()   # Wydrukować ścieżkę
-
+    segObj.saveVolumeAsPickle() 
+      
 if args.saveSlices:
     segObj.saveSlicesAsPng()
 
