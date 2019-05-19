@@ -44,16 +44,28 @@ def main(dataPath, algName):
 
 ###########################################
 # PROGRAM #
-parser = argparse.ArgumentParser(description=TEKST_POWITALNY)
-parser.add_argument('alg', type=str, help=INFO_ALG)
-parser.add_argument('datapath', type=str, help=INFO_DATA)
-parser.add_argument('--savePickle', type=str, help=INFO_SAVE_PICKLE)
-parser.add_argument('--saveVolumeSlices', type=str, help=INFO_SAVE_SLICES)
-# parser.add_argument('data-path', metavar='path')
+parser = argparse.ArgumentParser(description=TEKST_POWITALNY, formatter_class=argparse.RawDescriptionHelpFormatter)
+# Argumenty obowiązkowe - algorytm i datapath
+parser.add_argument('alg', metavar='ALGORITHM', type=str, help=INFO_ALG)
+parser.add_argument('dataPath', metavar='PATH_TO_DATA', type=str, help=INFO_DATA)
+parser.add_argument('--savePickle', action='store_true', help=INFO_SAVE_PICKLE)
+parser.add_argument('--saveSlices', action='store_true', help=INFO_SAVE_SLICES)
+parser.add_argument('--algParams', metavar='PARAMS_TO_PASS_TO_ALG', nargs='+')
+
+#  metavar='SAVE_RESULT_ARRAY_TO_PICKLE',
 
 args = parser.parse_args()
 a=args._get_kwargs()
 print('Podano:', args)
+segObj = SegmentVolume(args.dataPath)
+# segObj.saveVolumeAsPickle()
+segObj.segmentation(args.alg, args.algParams)
+if args.savePickle:
+    segObj.saveVolumeAsPickle()   # Wydrukować ścieżkę
+
+if args.saveSlices:
+    segObj.saveSlicesAsPng()
+
 # Program wywołany bez argumentów
 """
 argList = sys.argv
@@ -117,5 +129,4 @@ elif len(argList) == 3:
 else:
     print('Niepoprawne wywołanie.')
     print(KROTKIE_INFO)
-
 """
