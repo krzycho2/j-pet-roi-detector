@@ -34,6 +34,10 @@ class SegmentVolume():
     def algorithms(self):
         return self.__algorithms.keys()
 
+    @property
+    def algName(self):
+        return self.__algName
+
     # Inicjalizator
     def __init__(self, inputData):
         """
@@ -49,7 +53,7 @@ class SegmentVolume():
             raise ValueError
 
         # Stworzenie słownika z algorytmami
-        self.__algorithms = {'yen-thresh': self.__yenSegmentation, 'region-growing':self.__regionGrowingSegmentation, 'yen-region': self.__yenThreshRegionSegmentation, 'otsu-iter': self.__otsuIterSegmentation, 'otsu-multi': self.__otsuMultiSegmentation}
+        self.__algorithms = {'yen-thresh': self.yenThreshSegmentation, 'region-growing':self.regionGrowingSegmentation, 'yen-region': self.yenThreshRegionSegmentation, 'otsu-iter': self.otsuIterSegmentation, 'otsu-multi': self.otsuMultiSegmentation}
     
         # Ścieżka do pliku z wynikami segmentacji
         cwd = os.getcwd()
@@ -67,7 +71,12 @@ class SegmentVolume():
         else:
             os.makedirs(tempPath)
             self.__segmentDir = tempPath
-        
+
+        # Inicjalizacja danych posegmentowanych
+        self.__segmentedVolume = None
+
+        # Inicjalizacja pustej nazwy algorytmu
+        self.__algName = ""
 
     def segmentation(self, algName, params=None):
         """
@@ -76,14 +85,21 @@ class SegmentVolume():
         if algName not in self.__algorithms.keys():
             print('Podano niepoprawny algorytm!')
             raise ValueError
+
+        self.__algName = algName
+        print(f'Segmentacja algorytmem {algName}.')
+        if params:
+            self.__segmentedVolume = self.__algorithms[algName](params)
+        else:
+            self.__segmentedVolume = self.__algorithms[algName]()
         
-        self.__segmentedVolume = self.__algorithms[algName](params)
+        print(f'Segmentacja algorytmem {algName} wykonana poprawnie.')
 
     #--------------------------------------------------------------------
     # Algorytmy - metody prywatne
     #--------------------------------------------------------------------
 
-    def __yenSegmentation(self, params):
+    def yenThreshSegmentation(self):
         """
         Wykonuje segmentację metodą Yen'a
 
@@ -95,12 +111,28 @@ class SegmentVolume():
 
         return segVolume
     
-    def __otsuIterSegmentation(self, iterCount=3):
+    def otsuIterSegmentation(self, iterCount= 3):
         """
         Wykonuje segmentację algorytmem Otsu iteracyjnie
+        Argumenty
+            Słownik : iterCount: int -  Liczba iteracji algorytmu
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
+        if hasattr(iterCount, "__len__"):
+            if len(iterCount) != 1:
+                print('Segmentacja Otsu - podano za dużo argumentów')
+                raise ValueError
+            else:
+                iterCount = iterCount[0]    # Pierwszy element z tablicy
+
+        if not isinstance(iterCount, int):
+            iterCount = int(iterCount)
+
+        if iterCount < 0 or iterCount > 7:
+            print('Segmentacja Otsu - Liczba iteracycji musi być mniejsza od 7.')
+            raise ValueError
+            
         thresh = 0
         threshList = []
         for i in range(iterCount):
@@ -111,28 +143,20 @@ class SegmentVolume():
         print('Znalezione prgi: ', threshList)
         return segVolume
     
-    def __regionGrowingSegmentation(self, startPoints, c=2, sigma0=20):
+    def regionGrowingSegmentation(self, params=[ [0,0,0], 2, 20]):
         """
         Wykonuje segmentację algorytmem Region Growing. Za punkt startowy bierze punkt z obszaru zsegmentowantego progowaniem Otsu.
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
+
         img = self.__rawVolume.data3D
 
         trzyDe = True
         if len(img.shape) == 2:
             trzyDe = False
 
-        thresh = threshold_yen(img)
-        bw = img >= thresh
-        label_image = label(bw)
-
-        centroidy = []
-        for region in regionprops(label_image):
-            centroidy.append(region.centroid)
-
-        centroidy = np.array(centroidy)
-        startPoints = np.around(centroidy).astype(int)
+        startPoints, c, sigma0 = params
         regions = []
         for startPoint in startPoints:
 
@@ -222,7 +246,8 @@ class SegmentVolume():
         segImage = VolumeData(newImg)
         return segImage
 
-    def __yenThreshRegionSegmentation(self, region_c=2, region_sigma0=20):
+    def yenThreshRegionSegmentation(self, params=[2,20]):
+        region_c, region_sigma0 = params
         img = self.__rawVolume.data3D
         thresh = threshold_yen(img)
         bw = img >= thresh
@@ -234,11 +259,11 @@ class SegmentVolume():
 
         centroidy = np.array(centroidy)
         startPoints = np.around(centroidy).astype(int)
-        segImage = self.__regionGrowingSegment(startPoints, region_c, region_sigma0)
+        segImage = self.regionGrowingSegmentation([startPoints, region_c, region_sigma0])
 
         return segImage
 
-    def __otsuMultiSegmentation(self):
+    def otsuMultiSegmentation(self):
         """
         Segmentuje obraz za pomocą wielowartościowego (2) progowania Otsu.
         """
@@ -290,14 +315,26 @@ class SegmentVolume():
     #----------------------------------------------
 
     def saveVolumeAsPickle(self, savePath = None):
+        if not self.__segmentedVolume:
+            print('Nie wykonano żadnej segmentacji!')
+            raise NameError
+            return None
+        
         if savePath is None:
             savePath = self.__segmentDir + '/volumeData.pckl'
         self.__segmentedVolume.savePickle(savePath)
+        print(f'Zapisano pod ścieżką: {savePath}')
 
     def saveSlicesAsPng(self, savePath = None):
+        if not self.__segmentedVolume:
+            print('Nie wykonano żadnej segmentacji!')
+            raise NameError
+            return None
+        
         if savePath is None:
             savePath = self.__segmentDir + '/volumeSlices.png'
-        self.__segmentedVolume.saveSlices(savePath)
+        self.__segmentedVolume.saveSlices(savePath, title=f'Segmentacja algorytmem {self.__algName}')
+        print(f'Zapisano pod ścieżką: {savePath}')
         
 
 
