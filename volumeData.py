@@ -140,8 +140,8 @@ class VolumeData():
         with open(filePath, 'wb') as f:
 	        pickle.dump(self._data3D, f)
 
-    def saveSlices(self, filePath):
-        fig = self.__makeFigureWithAllSlices()
+    def saveSlices(self, filePath, title='Segmentacja'):
+        fig = self.__makeFigureWithAllSlices(figTitle=title)
         fig.savefig(filePath)
 
     def getSlice(self, sliceNum=None, deep=None):     
@@ -163,7 +163,7 @@ class VolumeData():
         rows = int(np.sqrt(Nz))
         cols = Nz//rows + 1
         fig = plt.figure(figsize=size)
-        fig.suptitle(figTitle)
+        fig.suptitle(figTitle, fontsize=20)
 
         for index in range(0,Nz):
             ax = fig.add_subplot(rows,cols,index+1)
