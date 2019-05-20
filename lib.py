@@ -6,71 +6,7 @@ import os
 # import itertools
 # Różne przydatne metody
 
-def multiThreshOtsu(image):
 
-    maxVal = 256
-
-    N = np.count_nonzero(image != 0)
-    hist = np.histogram(image, bins=maxVal)[0]
-    hist[0] = 0         # Nie uwzględnianie zera
-
-    w0k, w1k            = 0,0      # Jakieś wagi, double
-    m0k, m1k            = 0,0     # Średnie 
-    thresh1, thresh2    = 0,0
-    maxBetweenVar       = 0
-    mt = np.sum(np.arange(maxVal) * hist / N)
-
-    for t1 in range(maxVal):
-        w0k += hist[t1] / N
-        m0k += t1 * hist[t1] / N
-        m0 = m0k / w0k
-
-        w1k, m1k = 0,0
-        for t2 in range(t1+1, maxVal):
-            w1k += hist[t2] / N
-            m1k += t2 * hist[t2] / N
-            m1 = m1k / w1k
-           
-            w2k = 1 - (w0k + w1k)
-            m2k = mt - (m0k + m1k)
-            
-            if w2k <= 0:
-                break
-            m2 = m2k / w2k
-
-            currVar = w0k * (m0 - mt)**2 + w1k * (m1 - mt)**2 + w2k * (m2 - mt)**2
-
-            if maxBetweenVar < currVar:
-                maxBetweenVar = currVar
-                thresh1 = t1
-                thresh2 = t2
-
-    return [thresh1, thresh2]
-
-    
-def threshOtsu(image, start_point=0):
-    
-    nbins = 256 - start_point
-    hist = np.histogram(image, range=[start_point,255], bins=nbins)[0]
-    bin_centers = np.arange(nbins)
-    hist = hist.astype(float)
-
-    # class probabilities for all possible thresholds
-    weight1 = np.cumsum(hist)
-    weight2 = np.cumsum(hist[::-1])[::-1]
-    # class means for all possible thresholds
-    mean1 = np.cumsum(hist * bin_centers) / weight1
-    mean2 = (np.cumsum((hist * bin_centers)[::-1]) / weight2[::-1])[::-1]
-
-    # Clip ends to align class 1 and class 2 variables:
-    # The last value of `weight1`/`mean1` should pair with zero values in
-    # `weight2`/`mean2`, which do not exist.
-    variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
-
-    idx = np.argmax(variance12)
-    threshold = bin_centers[:-1][idx] + start_point
-    
-    return threshold
 
 def pointsInRadius(sPoint, radius):
     """
@@ -180,27 +116,13 @@ def getListOfFiles(dirName):
     Tworzy listę wszystkich plików w danej lokalizacji
     """
     allFiles = []
-    for root, dirs, files in os.walk('/home/krzysztof/Pulpit/Praca_inż'):
+    for root, dirs, files in os.walk(dirName):
         for name in files:
             allFiles.append(os.path.join(root, name))
                 
     return allFiles
 
-def arr2img(arr):
-    """
-    Konwertuje macierz N x 3  która w kolejnych wierszach ma współrzędne oraz wartości punktów
-    arr: len(a[0]) = 3 - a[0:2] - x,y, a[2] - f(x,y) 
-    len(arr) musi być kwadratem liczby całkowitej
-    """
-    N = int(np.sqrt(len(arr)))
-    img = np.zeros((N,N))
 
-    licz = 0
-    for i in range(N):
-        for j in range(N):
-            img[N-1-j,i] = arr[licz,2]
-            licz += 1
-    return img
 
 
 #########
@@ -228,9 +150,11 @@ Program jest narzędziem służącym do segmentacji obrazów 3D (wolumenów)
 pochodzących z rekonstrukcji obrazowania tomografem pozytonowym.
 
 Segmentacja może być wkonana za pomocą następujących algorytmów:
-- algorytm progujący Yena
-- algorytm progujący Otsu w połączeniu z algorytmem Region Growing
-- iteracyjny algorytm Otsu.
+- algorytm progujący Yena: alg='yen-thresh'
+- algorytm Region Growing: 'alg=region-growing' 
+- algorytm Region Growing wykorzystujący próg Yena jako punkt startowy: 'yen-region
+- iteracyjny algorytm Otsu: 'otsu-iter'
+- wieloprogowy algorytm Otsu: 'otsu-multi'
 Szczegółowe informacje można uzyskać wpisując poniżej polecenie:
 
 info [yen | otsu-region | otsu-iter]
@@ -282,3 +206,10 @@ Algorytm Region Growing w połączeniu z progowaniem Yen'a
 
 INFO_OTSU_ITER = """
 Algorytm Otsu iteracyjny"""
+
+INFO_ALG = """lelelel"""
+
+INFO_DATA = """dATA"""
+
+INFO_SAVE_PICKLE = """pickles"""
+INFO_SAVE_SLICES = "SLICES"
