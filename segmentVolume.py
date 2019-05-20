@@ -136,7 +136,7 @@ class SegmentVolume():
         thresh = 0
         threshList = []
         for i in range(iterCount):
-            thresh = lib.threshOtsu(self.__rawVolume.data3D, thresh)
+            thresh = self.__threshOtsu(self.__rawVolume.data3D, thresh)
             threshList.append(thresh)
         
         segVolume = self.__segmentDataByThresholds(threshList)
@@ -267,8 +267,46 @@ class SegmentVolume():
         """
         Segmentuje obraz za pomocą wielowartościowego (2) progowania Otsu.
         """
-        thresholds = lib.multiThreshOtsu(self.__rawVolume.data3D)
+        maxVal = 256
+
+        N = np.count_nonzero(self.__rawVolume.data3D != 0)
+        hist = np.histogram(self.__rawVolume.data3D, bins=maxVal)[0]
+        hist[0] = 0         # Nie uwzględnianie zera
+
+        w0k, w1k            = 0,0      # Jakieś wagi, double
+        m0k, m1k            = 0,0     # Średnie 
+        thresh1, thresh2    = 0,0
+        maxBetweenVar       = 0
+        mt = np.sum(np.arange(maxVal) * hist / N)
+
+        for t1 in range(maxVal):
+            w0k += hist[t1] / N
+            m0k += t1 * hist[t1] / N
+            m0 = m0k / w0k
+
+            w1k, m1k = 0,0
+            for t2 in range(t1+1, maxVal):
+                w1k += hist[t2] / N
+                m1k += t2 * hist[t2] / N
+                m1 = m1k / w1k
+            
+                w2k = 1 - (w0k + w1k)
+                m2k = mt - (m0k + m1k)
+                
+                if w2k <= 0:
+                    break
+                m2 = m2k / w2k
+
+                currVar = w0k * (m0 - mt)**2 + w1k * (m1 - mt)**2 + w2k * (m2 - mt)**2
+
+                if maxBetweenVar < currVar:
+                    maxBetweenVar = currVar
+                    thresh1 = t1
+                    thresh2 = t2
+
+        thresholds = [thresh1, thresh2]
         segImage = self.__segmentDataByThresholds(thresholds)
+
         return segImage
 
     def __segmentDataByThresholds(self, ths):
@@ -310,6 +348,31 @@ class SegmentVolume():
     
         return VolumeData(segData)
 
+    def __threshOtsu(self, start_point=0):
+        """
+        Algorytm obliczający próg na podstawie metody Otsu.
+        """
+        nbins = 256 - start_point
+        hist = np.histogram(self.__rawVolume.data3D, range=[start_point,255], bins=nbins)[0]
+        bin_centers = np.arange(nbins)
+        hist = hist.astype(float)
+
+        # class probabilities for all possible thresholds
+        weight1 = np.cumsum(hist)
+        weight2 = np.cumsum(hist[::-1])[::-1]
+        # class means for all possible thresholds
+        mean1 = np.cumsum(hist * bin_centers) / weight1
+        mean2 = (np.cumsum((hist * bin_centers)[::-1]) / weight2[::-1])[::-1]
+
+        # Clip ends to align class 1 and class 2 variables:
+        # The last value of `weight1`/`mean1` should pair with zero values in
+        # `weight2`/`mean2`, which do not exist.
+        variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+
+        idx = np.argmax(variance12)
+        threshold = bin_centers[:-1][idx] + start_point
+    
+        return threshold       
     # ---------------------------------------------
     # Pozostałe metody
     #----------------------------------------------
