@@ -89,7 +89,7 @@ class SegmentVolume():
         self.__algName = algName
         print(f'Segmentacja algorytmem {algName}.')
         if params:
-            self.__segmentedVolume = self.__algorithms[algName](params)
+            self.__segmentedVolume = self.__algorithms[algName](**params)
         else:
             self.__segmentedVolume = self.__algorithms[algName]()
         
@@ -99,19 +99,20 @@ class SegmentVolume():
     # Algorytmy - metody prywatne
     #--------------------------------------------------------------------
 
-    def yenThreshSegmentation(self):
+    def yenThreshSegmentation(self, **params):
         """
         Wykonuje segmentację metodą Yen'a
 
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
+        print('Warning: Segmentacja przez progowanie Yena nie przyjmuje żadnych argumentów, a podano:', params)
         thresh = threshold_yen(self.__rawVolume.data3D)
         segVolume = self.__segmentDataByThresholds(thresh)
 
         return segVolume
     
-    def otsuIterSegmentation(self, iterCount= 3):
+    def otsuIterSegmentation(self, **params):
         """
         Wykonuje segmentację algorytmem Otsu iteracyjnie
         Argumenty
@@ -119,15 +120,21 @@ class SegmentVolume():
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
-        if hasattr(iterCount, "__len__"):
-            if len(iterCount) != 1:
-                print('Segmentacja Otsu - podano za dużo argumentów')
-                raise ValueError
-            else:
-                iterCount = iterCount[0]    # Pierwszy element z tablicy
+        if params == {}:
+            params = {"iterCount": "3"}
 
-        if not isinstance(iterCount, int):
-            iterCount = int(iterCount)
+        # Jeśli się nie uda, to po prostu wyrzuci wyjątek
+        iterCount = int(params["iterCount"])
+        print('iterCount: ',iterCount, type(iterCount))
+        # if hasattr(iterCount, "__len__"):
+            # if len(iterCount) != 1:
+            #     print('Segmentacja Otsu - podano za dużo argumentów')
+            #     raise ValueError
+            # else:
+            #     iterCount = iterCount[0]    # Pierwszy element z tablicy
+
+        # if not isinstance(iterCount, int):        # Już niepotrzebne
+        #     iterCount = int(iterCount)
 
         if iterCount < 0 or iterCount > 7:
             print('Segmentacja Otsu - Liczba iteracycji musi być mniejsza od 7.')
@@ -136,50 +143,50 @@ class SegmentVolume():
         thresh = 0
         threshList = []
         for i in range(iterCount):
-            thresh = self.__threshOtsu(self.__rawVolume.data3D, thresh)
+            thresh = self.__threshOtsu(thresh)
             threshList.append(thresh)
         
         segVolume = self.__segmentDataByThresholds(threshList)
         print('Znalezione prgi: ', threshList)
         return segVolume
     
-    def regionGrowingSegmentation(self, params=[ [0,0,0], 2, 20]):
+    def regionGrowingSegmentation(self, **params):
         """
         Wykonuje segmentację algorytmem Region Growing. Za punkt startowy bierze punkt z obszaru zsegmentowantego progowaniem Otsu.
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
-
+        if params == {}:
+            params = {'startPoints':[[0,0,0]], 'c':2, "sigma0": 20}
+        
+        startPoints, c, sigma0 = params["startPoints"], params["c"], params["sigma0"]
+        # Sprawdzanie poprawności danych wejściowych
         img = self.__rawVolume.data3D
 
-        trzyDe = True
-        if len(img.shape) == 2:
-            trzyDe = False
+        # trzyDe = True
+        # if len(img.shape) == 2:   Do zaorania - robimy tylko w 3D
+            # trzyDe = False
 
-        startPoints, c, sigma0 = params
         regions = []
         for startPoint in startPoints:
 
-            if startPoint is None:
-                if trzyDe:
-                    startPoint = [0,0,0]
-                else:
-                    startPoint = [0,0]
+            # if startPoint is None:
+            #     if trzyDe:
+            #         startPoint = [0,0,0]
+            #     else:
+                    # startPoint = [0,0]
 
             # Parametr algorytmu
-            c = 2
-
             region = [startPoint]
 
             # Transformacje, które pozwolą na multiindeksowanie macierzy/obrazu
             regionArr = np.array(region)
-            if trzyDe:
-                tempImg = img[regionArr[:,0], regionArr[:,1], regionArr[:,2]]
-            else:
-                tempImg = img[regionArr[:,0], regionArr[:,1]]
+            # if trzyDe:
+            tempImg = img[regionArr[:,0], regionArr[:,1], regionArr[:,2]]
+            # else:
+                # tempImg = img[regionArr[:,0], regionArr[:,1]]
 
             avg = np.mean(tempImg)
-            sigma0 = 20
             sigmaC = sigma0
 
             licznikTrafien = 0
@@ -246,8 +253,14 @@ class SegmentVolume():
         segImage = VolumeData(newImg)
         return segImage
 
-    def yenThreshRegionSegmentation(self, params=[2,20]):
-        region_c, region_sigma0 = params
+    def yenThreshRegionSegmentation(self, **params):
+
+        if params == {}:
+            params = {"region_c": 2, "region_sigma0": 20}
+
+        region_c, region_sigma0 = params["region_c"], params["region_sigma0"]
+        # Sprawdzenie poprawaności danych wejściowych
+
         img = self.__rawVolume.data3D
         thresh = threshold_yen(img)
         bw = img >= thresh
@@ -263,10 +276,13 @@ class SegmentVolume():
 
         return segImage
 
-    def otsuMultiSegmentation(self):
+    def otsuMultiSegmentation(self, **params):
         """
         Segmentuje obraz za pomocą wielowartościowego (2) progowania Otsu.
+        Nie przyjmuje żadnych argumentów
         """
+        print('Segmentacja Otsu - algorytm nie przyjmuje żadnych argumentów, podano: ', params)
+
         maxVal = 256
 
         N = np.count_nonzero(self.__rawVolume.data3D != 0)
