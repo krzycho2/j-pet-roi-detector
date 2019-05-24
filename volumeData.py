@@ -2,14 +2,11 @@ import numpy as np
 import pickle
 import os
 import matplotlib.pyplot as plt
-import random
-import itertools
-from timeit import default_timer as timer
-from skimage.filters import threshold_yen
-from skimage.measure import label, regionprops
-from skimage.morphology import closing, square
+# import random
+# import itertools
+# from timeit import default_timer as timer
 import lib
-import datetime
+# import datetime
 
 class VolumeData():
     """
