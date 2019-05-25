@@ -120,26 +120,15 @@ class SegmentVolume():
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
-        if params == {}:
-            params = {"iterCount": "3"}
 
-        # Jeśli się nie uda, to po prostu wyrzuci wyjątek
-        iterCount = int(params["iterCount"])
-        print('iterCount: ',iterCount, type(iterCount))
-        # if hasattr(iterCount, "__len__"):
-            # if len(iterCount) != 1:
-            #     print('Segmentacja Otsu - podano za dużo argumentów')
-            #     raise ValueError
-            # else:
-            #     iterCount = iterCount[0]    # Pierwszy element z tablicy
+        if 'iterCount' in params.keys():
+            iterCount = int(params["iterCount"])
+            if iterCount < 0 or iterCount > 7:
+                print('Segmentacja Otsu - Liczba iteracycji musi być mniejsza od 8.')
+                raise ValueError
+        else:
+            iterCount = 3
 
-        # if not isinstance(iterCount, int):        # Już niepotrzebne
-        #     iterCount = int(iterCount)
-
-        if iterCount < 0 or iterCount > 7:
-            print('Segmentacja Otsu - Liczba iteracycji musi być mniejsza od 7.')
-            raise ValueError
-            
         thresh = 0
         threshList = []
         for i in range(iterCount):
@@ -156,13 +145,35 @@ class SegmentVolume():
         Wartość zwracana
             Posegmentowana macierz 3D: VolumeData
         """
-        if params == {}:
-            params = {'startPoints':[[0,0,0]], 'c':2, "sigma0": 20}
-        
-        startPoints, c, sigma0 = params["startPoints"], params["c"], params["sigma0"]
-        # DO DOPISANIA: Sprawdzanie poprawności danych wejściowych
-        img = self.__rawVolume.data3D
+        c=0 
+        sigma0 = 0
+        # Validate alogrithm params
+        if 'c' in params.keys():
+            if params['c'] <= 0:
+                print(f"yen-region segmentation: Incorrect 'region_c' param: {params['c']}")
+                raise ValueError
+            else:
+                region_c = params["c"]
+        else:
+            c = 2
 
+        if 'sigma0' in params.keys():
+            sigma0 = params["sigma0"]
+        else:
+            sigma0 = 20
+        
+        if 'startPoints' in params.keys():
+            sp = np.array(params['startPoints'])
+            if len(sp.shape) == 2 and sp.shape[1] == 3 and not False in (np.array(sp) >= 0):
+                startPoints = sp
+            else:
+                print('region-growing segmentation: Incorrect startPoints param.')
+                raise ValueError
+        else:
+            startPoints = [[0,0,0]]
+
+        # Algorithm
+        img = self.__rawVolume.data3D
         regions = []
         for startPoint in startPoints:
             # Create a binary mask with all points but startPoint set to False 
@@ -238,12 +249,25 @@ class SegmentVolume():
         return segImage
 
     def yenThreshRegionSegmentation(self, **params):
+        """
+        Explanatione
+        """
 
-        if params == {}:
-            params = {"region_c": 2, "region_sigma0": 20}
+        # Validate algorithm params
 
-        region_c, region_sigma0 = params["region_c"], params["region_sigma0"]
-        # Sprawdzenie poprawaności danych wejściowych
+        if "region_c" in params.keys():
+            if params['region_c'] <= 0:
+                print(f"yen-region segmentation: Incorrect 'region_c' param:{params['region_c']} ")
+                raise ValueError
+            else:
+                region_c = params["region_c"]
+        else:
+            region_c = 2
+
+        if "region_sigma0" in params.keys():
+            region_sigma0 = params["region_sigma0"]
+        else:
+            region_sigma0 = 20
 
         img = self.__rawVolume.data3D
         thresh = threshold_yen(img)
@@ -265,7 +289,7 @@ class SegmentVolume():
     def otsuMultiSegmentation(self, **params):
         """
         Segmentuje obraz za pomocą wielowartościowego (2) progowania Otsu.
-        Nie przyjmuje żadnych argumentów
+        Nie przyjmuje żadnych argumentów.
         """
         print('Segmentacja Otsu - algorytm nie przyjmuje żadnych argumentów, podano: ', params)
 
