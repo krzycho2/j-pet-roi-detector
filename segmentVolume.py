@@ -2,7 +2,7 @@ from volumeData import VolumeData
 import lib
 from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
-from skimage.morphology import closing, square
+from skimage.morphology import closing, square, binary_dilation
 import numpy as np
 import os
 import datetime
@@ -160,95 +160,79 @@ class SegmentVolume():
             params = {'startPoints':[[0,0,0]], 'c':2, "sigma0": 20}
         
         startPoints, c, sigma0 = params["startPoints"], params["c"], params["sigma0"]
-        # Sprawdzanie poprawności danych wejściowych
+        # DO DOPISANIA: Sprawdzanie poprawności danych wejściowych
         img = self.__rawVolume.data3D
-
-        # trzyDe = True
-        # if len(img.shape) == 2:   Do zaorania - robimy tylko w 3D
-            # trzyDe = False
 
         regions = []
         for startPoint in startPoints:
+            # Create a binary mask with all points but startPoint set to False 
+            mask = np.full(img.shape, False, dtype=bool)
+            mask[startPoint[0], startPoint[1], startPoint[2]] = True
 
-            # if startPoint is None:
-            #     if trzyDe:
-            #         startPoint = [0,0,0]
-            #     else:
-                    # startPoint = [0,0]
+            # Initial lists: region and checkedPoints 
+            checkedPoints = [list(startPoint)]
+            region = [list(startPoint)]
 
-            # Parametr algorytmu
-            region = [startPoint]
+            # Initial values of mean and sigma
+            avg = img[startPoint[0], startPoint[1], startPoint[2]]
+            sigma = c*sigma0
+            regionDone = False
+            iter=1
 
-            # Transformacje, które pozwolą na multiindeksowanie macierzy/obrazu
-            regionArr = np.array(region)
-            # if trzyDe:
-            tempImg = img[regionArr[:,0], regionArr[:,1], regionArr[:,2]]
-            # else:
-                # tempImg = img[regionArr[:,0], regionArr[:,1]]
+            while True:
+                mask = binary_dilation(mask)
+                print(f'Dylacja {iter}')
+                print(mask)
+                trueVals = np.array( np.where(mask) ) # trueVals[0] - iksy, trueVals[1] - igreki
+                # print('trueVals:')
+                print(trueVals)
 
-            avg = np.mean(tempImg)
-            sigmaC = sigma0
-
-            licznikTrafien = 0
-            R = 1
-
-            # Pętla po pikselach/wokselach. Wychodząc z punktu startPoint promieniście rozchodzi się algorytm.
-            while(True):
-                print(f'Promień: {R}')
-                points = lib.pointsInRadius(startPoint, R)
-                if not lib.belongsToArr(points, img):    # Sprawdzenie, czy przynajmniej jeden punkt należy do macierzy
-                    print('Wyjście poza macierz wszystkich punktów.')
-                    break
-
-                licznikTrafien = 0
-                for p in points:
-                    # p - współrzędne punktu 
-                    if lib.belongsToArr(p, img):
-                        print(f'Punkt {p}: {img[p[0], p[1], p[2]]}')
-                        if trzyDe:
-                            tempWynik = abs(img[p[0], p[1], p[2]] - avg)
-                        else:
-                            tempWynik = abs(img[p[0], p[1]] - avg)
-                        print(f'tempWynik: {tempWynik}, sigmaC: {sigmaC}')
-
-                        if tempWynik <= sigmaC:
-                            region.append(p)
-                            print('Dodany')
-                            licznikTrafien += 1
-
-                            # Transformacje, które pozwolą na multiindeksowanie macierzy/obrazu
-                            regionArr = np.array(region)
+                counter = 0
+                for i in range(trueVals.shape[1]):
+                    ind1, ind2, ind3 = trueVals[0,i], trueVals[1,i], trueVals[2,i]
+                    if not [ind1,ind2, ind3] in checkedPoints:
+                        print(f'sprawdzamy Indeksy {ind1, ind2}')
+                        # Aktualizowanie bazy sprawdzonych punktów
+                        checkedPoints.append([ind1,ind2, ind3])
+                        if abs(img[ind1,ind2, ind3] - avg) <= c*sigma:
+                            print(f'Wartość {img[ind1,ind2, ind3]} dodana do regionu')
+                            region.append([ind1,ind2, ind3])       # Dodajemy region
+                            counter += 1
                             
-                            if trzyDe:
-                                tempImg = img[regionArr[:,0], regionArr[:,1], regionArr[:,2]]
-                            else:
-                                tempImg = img[regionArr[:,0], regionArr[:,1]]
-        
+                            # WARUNEK STOPU
+                            if len(region) > 100:
+                                print('Region zbyt duży. Zmniejsz parametr c.')
+                                raise RuntimeError
+                                
+                            
+                            # Aktualizowanie średniej i sigmy
+                            regionArr = np.array(region)
+                            tempImg = img[regionArr[:,0], regionArr[:,1], regionArr[:,2]]
                             avg = np.mean(tempImg)
-                            sigmaC = c * np.sqrt(np.var(tempImg))
-
-                            if sigmaC == 0:
-                                sigmaC = sigma0
-                
-                            print('srednia:', avg)
-                            print('sigma:', sigmaC)
-                
-                # Jeśli licznik jest 0 to zakończ pętlę
-                if licznikTrafien == 0 :
-                    print('Brak trafień dla promienia R=', R)
+                            sigma = np.sqrt(np.mean( (tempImg - avg)**2 ))
+                            print(f'Srednia: {avg}, sigma" {sigma}')  
+                            if sigma == 0:
+                                sigma = sigma0
+                                
+                        else:
+                            mask[trueVals[0,i], trueVals[1,i], trueVals[2,i]] = False       # Ustawiamy false, żeby 'tam nie iść'
+                print(f'Liczba dodanych: {counter}. Następne dylacja. \n')
+                iter +=1
+            
+                if counter == 0:        # Jeśli ze wszystkich punktów wokół nie dodaliśmy żadnego do regionu to przerywamy
                     break
 
-                R += 1
-        r = np.array(region)
-        regions.append(r)
+            # print(mask)
 
+            r = np.array(region)
+            regions.append(r)
+            # print(img[r[:,0], r[:,1])
+
+        # Segmentacja
         newImg = np.zeros(img.shape, dtype='uint8')
-
         for r in regions:
-            if trzyDe:
-                newImg[r[:,0], r[:,1], r[:,2]] = 255
-            else:
-                newImg[r[:,0], r[:,1]] = 255
+            newImg[r[:,0], r[:,1], r[:,2]] = 255
+
 
         segImage = VolumeData(newImg)
         return segImage
@@ -272,7 +256,9 @@ class SegmentVolume():
 
         centroidy = np.array(centroidy)
         startPoints = np.around(centroidy).astype(int)
-        segImage = self.regionGrowingSegmentation([startPoints, region_c, region_sigma0])
+        
+        newParams = {'startPoints': startPoints, 'c': region_c, 'sigma0': region_sigma0}
+        segImage = self.regionGrowingSegmentation(**newParams)
 
         return segImage
 
@@ -332,6 +318,8 @@ class SegmentVolume():
 
         image = self.__rawVolume.data3D
         maxThs = 8
+
+        # ths must be a list.
         if not hasattr(ths, "__len__"):
             ths = [ths]
 
@@ -342,12 +330,8 @@ class SegmentVolume():
             print('Nie obsługujemy tylu możliwych progów. Pozdrawiamy, ekipa segmentData.')
             return None
 
-        # Kolory
-        # kolory = []
-
-        # Zmiana do kolorów w skali szarości
+        # Create grayscale colors 
         kolory = np.linspace(0, 255, len(ths) + 1, dtype='uint8')   # Równo rozłożone wartości od czarnego do białego
-        print('Kolory:', kolory)
 
         segData = np.zeros(image.shape, dtype='uint8')
     
