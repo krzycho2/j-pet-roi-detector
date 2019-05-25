@@ -113,7 +113,7 @@ class VolumeData():
 
         print(f'Dane mają wymiary: {rawData.shape}')
 
-        # Jak zostanie czasu to zaimplementować float zamiast uint8
+        # Convert to uint8, in future version - float
         if isinstance(rawData.flat[0], np.float):
             if np.min(rawData) >= 0 and np.max(rawData) <= 1:
                 print('Konwersja danych do uint8')
