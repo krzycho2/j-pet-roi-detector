@@ -98,8 +98,23 @@ class VolumeData():
         ksztalt = rawData.shape
         if len(ksztalt) == 2:
             if ksztalt[0] > 0 and ksztalt[1] == 4:      # Dane w formacie Nx4
-                rawData = lib.points2Img3D(rawData)
                 print('Konwersja do wolumenu 3D')
+                tempData = rawData
+                ind = np.lexsort((tempData[:,2], tempData[:,1], tempData[:,0]))    # Sortowanie danych
+                tempData = tempData[ind]
+    
+                Nx = len(set(tempData[:,0]))
+                Ny = len(set(tempData[:,1]))
+                Nz = len(set(tempData[:,2]))
+                
+                licz = 0
+                rawData = np.zeros((Nx,Ny,Nz))
+                for i in range(Nx):
+                    for j in range(Ny):
+                        for k in range(Nz):
+                            rawData[Ny-1-j,i,k] = tempData[licz,3]          # Przekopiowanie danych
+                            licz += 1
+                            
             else:
                 print('Niepoprawny format danych.')
                 raise ValueError

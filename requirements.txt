@@ -1,10 +1,5 @@
 numpy
 scipy
-medpy
-interfile
-opencv-python
 matplotlib
-imutils
-pydicom
 opencv-python
 scikit-image

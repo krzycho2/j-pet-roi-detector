@@ -382,6 +382,7 @@ class SegmentVolume():
         hist = hist.astype(float)
 
         # class probabilities for all possible thresholds
+        # Wagi - skumulowane sumy wartości histogramu
         weight1 = np.cumsum(hist)
         weight2 = np.cumsum(hist[::-1])[::-1]
         # class means for all possible thresholds
