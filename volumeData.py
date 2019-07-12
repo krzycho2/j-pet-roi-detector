@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 # import random
 # import itertools
 # from timeit import default_timer as timer
-import lib
 # import datetime
 
 class VolumeData():

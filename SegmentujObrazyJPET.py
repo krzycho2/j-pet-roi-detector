@@ -8,7 +8,7 @@ import argparse
 import json
 
 # -----Napisy wyświetlane na ekranie ---------------------------------------------------
-TEKST_POWITALNY = """ Example: SegmentujObrazyJPET.py --savePickle --saveSlices --algParams='{"startPoints":[[1,1,1], [10,10,10]], "sigma0":"20", "c":"2"}' algName='yen-region' dataPath='/home/John/reconstruction.txt'
+TEKST_POWITALNY = """ Example: SegmentujObrazyJPET.py --savePickle --saveSlices --algParams='{"startPoints":[[1,1,1], [10,10,10]], "sigma0":"20", "c":"2"}' algName='region-growing' dataPath='/home/John/reconstruction.txt'
                      
                     SegmentujObrazyJPET
                 by Krzysztof Krupiński 2019
@@ -45,8 +45,8 @@ INFO_PARAMS = "Namevalue parameteres that are passed to algorithms. Example: '{\
 parser = argparse.ArgumentParser(description=TEKST_POWITALNY, formatter_class=argparse.RawDescriptionHelpFormatter)
 
 # Positional arguments - algorithm i datapath
-parser.add_argument('alg', metavar='ALGORITHM', type=str, help=INFO_ALG)
-parser.add_argument('dataPath', metavar='PATH_TO_DATA', type=str, help=INFO_DATA)
+parser.add_argument('algName', type=str, help=INFO_ALG)
+parser.add_argument('dataPath',  type=str, help=INFO_DATA)
 
 # Optional arguments
 parser.add_argument('--savePickle', action='store_true', help=INFO_SAVE_PICKLE)

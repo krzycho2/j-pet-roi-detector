@@ -1,5 +1,4 @@
 from volumeData import VolumeData
-import lib
 from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square, binary_dilation
